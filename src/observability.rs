@@ -10,20 +10,18 @@ pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
     // Check if we're in test mode by looking for TEST_MODE env var
-    let is_test_mode = std::env::var("CARGO_CFG_TEST").is_ok() 
-        || std::env::var("TEST_MODE").is_ok()
-        || cfg!(test);
-    
+    let is_test_mode =
+        std::env::var("CARGO_CFG_TEST").is_ok() || std::env::var("TEST_MODE").is_ok() || cfg!(test);
+
     // Get log level from env var or default to INFO (or ERROR for tests)
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| {
-            if is_test_mode {
-                EnvFilter::new("error")
-            } else {
-                EnvFilter::new("info")
-            }
-        });
-    
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        if is_test_mode {
+            EnvFilter::new("error")
+        } else {
+            EnvFilter::new("info")
+        }
+    });
+
     if is_test_mode {
         // Use compact format for tests
         let fmt_layer = fmt::layer()
@@ -32,7 +30,7 @@ pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
             .with_file(false)
             .with_line_number(false)
             .compact();
-        
+
         tracing_subscriber::registry()
             .with(filter)
             .with(fmt_layer)
@@ -45,7 +43,7 @@ pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
             .with_file(true)
             .with_line_number(true)
             .json();
-        
+
         tracing_subscriber::registry()
             .with(filter)
             .with(fmt_layer)
