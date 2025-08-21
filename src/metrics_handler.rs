@@ -9,11 +9,18 @@ pub struct MetricsHandler {
 }
 
 #[cfg(feature = "std")]
-impl MetricsHandler {
-    pub fn new() -> Self {
+impl Default for MetricsHandler {
+    fn default() -> Self {
         Self {
             metrics: Arc::new(Mutex::new(Metrics::default())),
         }
+    }
+}
+
+#[cfg(feature = "std")]
+impl MetricsHandler {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn get_metrics(&self) -> Arc<Mutex<Metrics>> {

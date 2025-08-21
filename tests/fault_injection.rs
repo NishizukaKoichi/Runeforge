@@ -75,7 +75,7 @@ project_name: "test-project"
             if i > 0 {
                 large_blueprint.push_str(", ");
             }
-            large_blueprint.push_str(&format!("\"Goal {}\"", i));
+            large_blueprint.push_str(&format!("\"Goal {i}\""));
         }
 
         large_blueprint.push_str(
