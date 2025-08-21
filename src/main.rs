@@ -42,7 +42,7 @@ fn main() {
     if let Err(e) = observability::init_observability() {
         eprintln!("Failed to initialize observability: {e}");
     }
-    
+
     let cli = Cli::parse();
 
     match &cli.command {
@@ -83,15 +83,19 @@ fn run_plan_with_rules(
 ) -> Result<(), String> {
     let _start_time = Instant::now();
     let _span = observability::DurationSpan::new("run_plan");
-    
+
     // Read input file
     let input_content =
         fs::read_to_string(file).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Validate and parse blueprint
-    let format = if file.ends_with(".json") { "json" } else { "yaml" };
+    let format = if file.ends_with(".json") {
+        "json"
+    } else {
+        "yaml"
+    };
     observability::log_blueprint_validation(input_content.len(), format);
-    
+
     let blueprint = match schema::validate_blueprint(&input_content) {
         Ok(bp) => bp,
         Err(e) => {
@@ -131,7 +135,7 @@ fn run_plan_with_rules(
     } else {
         println!("{output_json}");
     }
-    
+
     // Log final selection summary
     let stack_summary = vec![
         ("language".to_string(), plan.stack.language.clone()),

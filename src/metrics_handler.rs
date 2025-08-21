@@ -15,15 +15,15 @@ impl MetricsHandler {
             metrics: Arc::new(Mutex::new(Metrics::default())),
         }
     }
-    
+
     pub fn get_metrics(&self) -> Arc<Mutex<Metrics>> {
         Arc::clone(&self.metrics)
     }
-    
+
     /// Export metrics in Prometheus format
     pub fn export_prometheus(&self) -> String {
         let metrics = self.metrics.lock().unwrap();
-        
+
         format!(
             r#"# HELP runeforge_blueprint_validations_total Total number of blueprint validations
 # TYPE runeforge_blueprint_validations_total counter
@@ -52,17 +52,18 @@ runeforge_constraint_violations_total {}
             metrics.constraint_violations
         )
     }
-    
+
     /// Export metrics in JSON format
     pub fn export_json(&self) -> String {
         let metrics = self.metrics.lock().unwrap();
-        
+
         serde_json::json!({
             "blueprint_validations": metrics.blueprint_validations,
             "successful_selections": metrics.successful_selections,
             "failed_selections": metrics.failed_selections,
             "average_selection_time_ms": metrics.average_selection_time_ms,
             "constraint_violations": metrics.constraint_violations
-        }).to_string()
+        })
+        .to_string()
     }
 }

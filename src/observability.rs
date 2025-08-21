@@ -8,23 +8,50 @@ use std::time::Instant;
 #[cfg(feature = "std")]
 pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+
+    // Check if we're in test mode by looking for TEST_MODE env var
+    let is_test_mode = std::env::var("CARGO_CFG_TEST").is_ok() 
+        || std::env::var("TEST_MODE").is_ok()
+        || cfg!(test);
     
-    // Get log level from env var or default to INFO
+    // Get log level from env var or default to INFO (or ERROR for tests)
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+        .unwrap_or_else(|_| {
+            if is_test_mode {
+                EnvFilter::new("error")
+            } else {
+                EnvFilter::new("info")
+            }
+        });
     
-    let fmt_layer = fmt::layer()
-        .with_target(true)
-        .with_thread_ids(true)
-        .with_file(true)
-        .with_line_number(true)
-        .json(); // Use JSON format for structured logging
-    
-    tracing_subscriber::registry()
-        .with(filter)
-        .with(fmt_layer)
-        .init();
-    
+    if is_test_mode {
+        // Use compact format for tests
+        let fmt_layer = fmt::layer()
+            .with_target(false)
+            .with_thread_ids(false)
+            .with_file(false)
+            .with_line_number(false)
+            .compact();
+        
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(fmt_layer)
+            .init();
+    } else {
+        // Use JSON format for production
+        let fmt_layer = fmt::layer()
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_file(true)
+            .with_line_number(true)
+            .json();
+        
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(fmt_layer)
+            .init();
+    }
+
     Ok(())
 }
 
@@ -109,12 +136,7 @@ pub fn log_constraint_evaluation(
 /// Log scoring details
 #[cfg(feature = "std")]
 #[instrument]
-pub fn log_scoring(
-    component: &str,
-    candidate: &str,
-    score: f64,
-    breakdown: &[(String, f64)],
-) {
+pub fn log_scoring(component: &str, candidate: &str, score: f64, breakdown: &[(String, f64)]) {
     debug!(
         component = component,
         candidate = candidate,
@@ -139,11 +161,7 @@ pub fn log_final_selection(stack_summary: &[(String, String)], total_cost: f64) 
 #[cfg(feature = "std")]
 #[instrument]
 pub fn log_error(context: &str, error: &str) {
-    error!(
-        context = context,
-        error = error,
-        "Error occurred"
-    );
+    error!(context = context, error = error, "Error occurred");
 }
 
 /// Metrics collection structure
@@ -175,24 +193,25 @@ impl Metrics {
     pub fn record_validation(&mut self) {
         self.blueprint_validations += 1;
     }
-    
+
     pub fn record_selection(&mut self, success: bool, duration_ms: u128) {
         if success {
             self.successful_selections += 1;
         } else {
             self.failed_selections += 1;
         }
-        
+
         // Update rolling average
         let total_selections = self.successful_selections + self.failed_selections;
         let current_total = self.average_selection_time_ms * (total_selections - 1) as f64;
-        self.average_selection_time_ms = (current_total + duration_ms as f64) / total_selections as f64;
+        self.average_selection_time_ms =
+            (current_total + duration_ms as f64) / total_selections as f64;
     }
-    
+
     pub fn record_constraint_violation(&mut self) {
         self.constraint_violations += 1;
     }
-    
+
     pub fn log_summary(&self) {
         info!(
             blueprint_validations = self.blueprint_validations,
@@ -223,7 +242,8 @@ pub fn log_constraint_evaluation(
     _required_value: f64,
     _actual_value: f64,
     _passed: bool,
-) {}
+) {
+}
 
 #[cfg(not(feature = "std"))]
 pub fn log_scoring(
@@ -231,10 +251,15 @@ pub fn log_scoring(
     _candidate: &str,
     _score: f64,
     _breakdown: &[(alloc::string::String, f64)],
-) {}
+) {
+}
 
 #[cfg(not(feature = "std"))]
-pub fn log_final_selection(_stack_summary: &[(alloc::string::String, alloc::string::String)], _total_cost: f64) {}
+pub fn log_final_selection(
+    _stack_summary: &[(alloc::string::String, alloc::string::String)],
+    _total_cost: f64,
+) {
+}
 
 #[cfg(not(feature = "std"))]
 pub fn log_error(_context: &str, _error: &str) {}

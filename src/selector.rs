@@ -374,17 +374,23 @@ impl Selector {
             .into_iter()
             .map(|c| {
                 let score = self.calculate_score(&c.metrics, blueprint);
-                
+
                 // Log scoring details
                 let breakdown = vec![
-                    ("quality".to_string(), self.rules.weights.quality * c.metrics.quality),
+                    (
+                        "quality".to_string(),
+                        self.rules.weights.quality * c.metrics.quality,
+                    ),
                     ("slo".to_string(), self.rules.weights.slo * c.metrics.slo),
                     ("cost".to_string(), self.rules.weights.cost * c.metrics.cost),
-                    ("security".to_string(), self.rules.weights.security * c.metrics.security),
+                    (
+                        "security".to_string(),
+                        self.rules.weights.security * c.metrics.security,
+                    ),
                     ("ops".to_string(), self.rules.weights.ops * c.metrics.ops),
                 ];
                 observability::log_scoring(topic, &c.name, score, &breakdown);
-                
+
                 (c, score)
             })
             .collect();
@@ -497,7 +503,7 @@ impl Selector {
                 return false;
             }
         }
-        
+
         // Note: quality_min, security_min, and slo_min constraints could be added
         // to the schema if needed. For now, these are checked via scoring.
 

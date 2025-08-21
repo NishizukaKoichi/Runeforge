@@ -64,10 +64,12 @@ project_name: "test-project"
     /// Test behavior with extremely large input
     #[test]
     fn test_extremely_large_input() {
-        let mut large_blueprint = String::from(r#"{
+        let mut large_blueprint = String::from(
+            r#"{
             "project_name": "test-project",
-            "goals": ["#);
-        
+            "goals": ["#,
+        );
+
         // Create a very large goals array
         for i in 0..10000 {
             if i > 0 {
@@ -75,8 +77,9 @@ project_name: "test-project"
             }
             large_blueprint.push_str(&format!("\"Goal {}\"", i));
         }
-        
-        large_blueprint.push_str(r#"],
+
+        large_blueprint.push_str(
+            r#"],
             "constraints": {
                 "monthly_cost_usd_max": 1000
             },
@@ -85,7 +88,8 @@ project_name: "test-project"
                 "global": true,
                 "latency_sensitive": false
             }
-        }"#);
+        }"#,
+        );
 
         let result = schema::validate_blueprint(&large_blueprint);
         // Should handle large input gracefully
@@ -120,14 +124,18 @@ traffic_profile:
 "#;
 
         let blueprint = schema::validate_blueprint(blueprint_str).unwrap();
-        
+
         let rules_content = include_str!("../resources/rules.yaml");
         let selector = Selector::new(rules_content, 42).unwrap();
-        
+
         let result = selector.select(&blueprint);
         assert!(result.is_err());
         let err_msg = result.unwrap_err();
-        assert!(err_msg.contains("cost constraint") || err_msg.contains("No suitable") || err_msg.contains("exceeds budget"));
+        assert!(
+            err_msg.contains("cost constraint")
+                || err_msg.contains("No suitable")
+                || err_msg.contains("exceeds budget")
+        );
     }
 
     /// Test behavior with conflicting requirements
@@ -149,10 +157,10 @@ traffic_profile:
 "#;
 
         let blueprint = schema::validate_blueprint(blueprint_str).unwrap();
-        
+
         let rules_content = include_str!("../resources/rules.yaml");
         let selector = Selector::new(rules_content, 42).unwrap();
-        
+
         let result = selector.select(&blueprint);
         // Should fail to find a suitable stack
         assert!(result.is_err());
@@ -286,7 +294,7 @@ candidates:
 "#;
 
         let selector = Selector::new(rules_with_missing_deps, 42).unwrap();
-        
+
         let blueprint_str = r#"
 project_name: "test-project"
 goals:
@@ -300,7 +308,7 @@ traffic_profile:
 
         let blueprint = schema::validate_blueprint(blueprint_str).unwrap();
         let result = selector.select(&blueprint);
-        
+
         // Should either skip the component or fail gracefully
         assert!(result.is_ok() || result.is_err());
     }

@@ -43,6 +43,8 @@ jobs:
             cargo generate-lockfile
           fi
       - name: test
+        env:
+          TEST_MODE: "1"
         run: |
           if command -v cargo-nextest >/dev/null 2>&1; then
             cargo nextest run --all --profile ci

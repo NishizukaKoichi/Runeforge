@@ -22,6 +22,8 @@ jobs:
         run: cargo install cargo-tarpaulin
         
       - name: Run tests with coverage
+        env:
+          TEST_MODE: "1"
         run: cargo tarpaulin --out Xml --output-dir coverage
         
       - name: Upload coverage to Codecov
