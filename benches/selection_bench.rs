@@ -39,11 +39,10 @@ traffic_profile:
   latency_sensitive: false
 "#;
 
-    let rules_yaml = std::fs::read_to_string("resources/rules.yaml")
-        .expect("Failed to read rules.yaml");
+    let rules_yaml =
+        std::fs::read_to_string("resources/rules.yaml").expect("Failed to read rules.yaml");
 
-    let blueprint = schema::validate_blueprint(blueprint_yaml)
-        .expect("Failed to parse blueprint");
+    let blueprint = schema::validate_blueprint(blueprint_yaml).expect("Failed to parse blueprint");
 
     c.bench_function("selection_algorithm", |b| {
         b.iter(|| {
@@ -66,12 +65,11 @@ traffic_profile:
   latency_sensitive: false
 "#;
 
-    let rules_yaml = std::fs::read_to_string("resources/rules.yaml")
-        .expect("Failed to read rules.yaml");
+    let rules_yaml =
+        std::fs::read_to_string("resources/rules.yaml").expect("Failed to read rules.yaml");
 
-    let blueprint = schema::validate_blueprint(blueprint_yaml)
-        .expect("Failed to parse blueprint");
-    
+    let blueprint = schema::validate_blueprint(blueprint_yaml).expect("Failed to parse blueprint");
+
     let selector = Selector::new(&rules_yaml, 42).unwrap();
     let plan = selector.select(&blueprint).unwrap();
 
@@ -95,8 +93,8 @@ traffic_profile:
   latency_sensitive: false
 "#;
 
-    let rules_yaml = std::fs::read_to_string("resources/rules.yaml")
-        .expect("Failed to read rules.yaml");
+    let rules_yaml =
+        std::fs::read_to_string("resources/rules.yaml").expect("Failed to read rules.yaml");
 
     c.bench_function("end_to_end", |b| {
         b.iter(|| {

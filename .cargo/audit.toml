@@ -9,12 +9,9 @@
 # ]
 ignore = []
 
-# Warn for unmaintained crates
-unmaintained = "warn"
-
-# Warn for crates with security notices
-notice = "warn"
+# Warn about informational advisories
+informational_warnings = ["unmaintained", "notice"]
 
 # Severity threshold for exiting with error
-# Options: "info", "warn", "error"
-severity-threshold = "error"
+# Options: "info", "low", "medium", "high", "critical"
+severity_threshold = "high"

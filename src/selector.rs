@@ -1,8 +1,14 @@
+//! Technology stack selection engine.
+//!
+//! This module implements the core selection algorithm that evaluates
+//! technology candidates based on weighted metrics and constraints.
+
 use crate::schema::*;
 use crate::util::{calculate_blueprint_hash, calculate_plan_hash, tie_breaker};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Rules define the available technology candidates and scoring weights.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Rules {
     pub version: i32,
@@ -12,6 +18,7 @@ pub struct Rules {
     pub compliance_requirements: HashMap<String, ComplianceRequirement>,
 }
 
+/// Scoring weights for different quality metrics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Weights {
     pub quality: f64,
@@ -21,6 +28,7 @@ pub struct Weights {
     pub ops: f64,
 }
 
+/// Technology candidates organized by category.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CandidateCategories {
     pub language: Vec<Candidate>,
@@ -34,6 +42,7 @@ pub struct CandidateCategories {
     pub ci_cd: Vec<Candidate>,
 }
 
+/// A technology candidate with its metrics and constraints.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Candidate {
     pub name: String,
