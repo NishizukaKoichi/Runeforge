@@ -1,0 +1,20 @@
+# Security audit configuration for cargo-audit
+# This file documents known security issues that have been assessed and accepted
+
+[advisories]
+# List RUSTSEC IDs that should be ignored with justification
+# Example:
+# ignore = [
+#     "RUSTSEC-2020-0001", # Example: Known issue in dev dependency, not exploitable in our use case
+# ]
+ignore = []
+
+# Warn for unmaintained crates
+unmaintained = "warn"
+
+# Warn for crates with security notices
+notice = "warn"
+
+# Severity threshold for exiting with error
+# Options: "info", "warn", "error"
+severity-threshold = "error"

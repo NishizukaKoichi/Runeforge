@@ -1,0 +1,39 @@
+module_done:
+  ci:
+    tests: pass
+    coverage_min: 0.80
+    lint_fmt: pass
+    security_scan: pass       # cargo audit（余計なフラグを使わない）
+    reproducible_build: true  # --locked で通過
+    msrv: "1.82"
+  api:
+    breaking_changes: false
+    docs_readme: updated
+    schemas_dir: "schemas/"
+    examples_dir: "examples/"
+  integration_contract:
+    contract_tests: pass
+    fixtures_dir: "fixtures/"
+  quality_gates:
+    performance:
+      p95_latency_ms_max: 100
+      throughput_min: 1000
+    resource_limits:
+      memory_max_mb: 50
+      cpu_time_sec: 10
+      wall_timeout_sec: 30
+    error_handling: codes_documented
+    determinism: seedable_true
+  security_license:
+    sbom: "sbom.spdx.json"
+    sbom_signed_bundle: "sbom.spdx.json.sig"  # cosign --bundle
+    license_compliance: pass
+    audit_allowlist: ".cargo/audit.toml"      # 例外はRUSTSEC IDで記録
+  versioning:
+    semver_tagged: true
+    changelog_updated: true
+  optional:
+    property_tests: run
+    fuzz_tests: not_implemented
+    chaos_tests: not_implemented
+    observability: not_documented

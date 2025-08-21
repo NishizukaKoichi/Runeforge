@@ -1,0 +1,21 @@
+# Integration test fixture for inter-module contract testing
+# This blueprint represents a typical integration scenario
+
+project_name: "integration-test-app"
+goals:
+  - "Build a microservices platform"
+  - "Support event-driven architecture"
+  - "Enable real-time analytics"
+constraints:
+  monthly_cost_usd_max: 1500
+  persistence: "both"
+  region_allow: ["us-east", "us-west", "eu-central"]
+  compliance: ["audit-log", "sbom"]
+traffic_profile:
+  rps_peak: 25000
+  global: true
+  latency_sensitive: true
+prefs:
+  backend: ["Rust", "Go"]
+  database: ["PostgreSQL", "ScyllaDB"]
+  queue: ["NATS", "Kafka"]

@@ -1,0 +1,40 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: 1.82.0
+          
+      - uses: Swatinem/rust-cache@v2
+      
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+        
+      - name: Run tests with coverage
+        run: cargo tarpaulin --out Xml --output-dir coverage
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/cobertura.xml
+          fail_ci_if_error: true
+          
+      - name: Check coverage threshold
+        run: |
+          coverage=$(cargo tarpaulin --print-summary | grep -oP 'Coverage: \K[\d.]+' | head -1)
+          echo "Coverage: $coverage%"
+          if (( $(echo "$coverage < 80" | bc -l) )); then
+            echo "Coverage $coverage% is below 80% threshold"
+            exit 1
+          fi

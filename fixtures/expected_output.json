@@ -1,0 +1,30 @@
+{
+  "decisions": [
+    {
+      "topic": "language",
+      "choice": "Rust",
+      "reasons": ["High performance requirements", "Latency-sensitive workload"],
+      "alternatives": ["Go"],
+      "score": 0.9
+    }
+  ],
+  "stack": {
+    "language": "Rust",
+    "frontend": "React",
+    "backend": "Actix Web",
+    "database": "PostgreSQL",
+    "cache": "Redis",
+    "queue": "NATS JetStream",
+    "ai": ["OpenAI GPT-4o"],
+    "infra": "Terraform + Cloudflare Workers (wasm32-unknown-unknown)",
+    "ci_cd": "GitHub Actions"
+  },
+  "estimated": {
+    "monthly_cost_usd": 1200
+  },
+  "meta": {
+    "seed": 42,
+    "blueprint_hash": "sha256:example",
+    "plan_hash": "sha256:example"
+  }
+}

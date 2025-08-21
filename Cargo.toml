@@ -30,6 +30,11 @@ tempfile = "3"
 insta = "1.40"
 proptest = "1.5"
 jsonschema = "0.17"
+criterion = "0.5"
+
+[[bench]]
+name = "selection_bench"
+harness = false
 
 [[bin]]
 name = "runeforge"

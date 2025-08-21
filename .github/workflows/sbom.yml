@@ -28,6 +28,14 @@ jobs:
           syft dir:. -o spdx-json > sbom-source.spdx.json
           syft dir:. -o cyclonedx-json > sbom-source.cdx.json
       
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      
+      - name: Sign SBOM with cosign (keyless)
+        run: |
+          cosign sign-blob --yes --bundle sbom-source.spdx.json.sig sbom-source.spdx.json
+          cosign sign-blob --yes --bundle sbom-source.cdx.json.sig sbom-source.cdx.json
+      
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:

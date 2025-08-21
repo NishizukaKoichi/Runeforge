@@ -1,7 +1,16 @@
+//! Schema definitions and validation for Blueprint input and Stack output.
+//!
+//! This module provides the core data structures and validation logic for:
+//! - Blueprint: Input requirements specification
+//! - StackPlan: Output technology stack recommendations
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-// Blueprint schema structures
+/// Blueprint represents the input requirements for technology stack selection.
+///
+/// A blueprint describes the project requirements, constraints, and preferences
+/// that guide the selection of an optimal technology stack.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Blueprint {
     pub project_name: String,
@@ -14,6 +23,7 @@ pub struct Blueprint {
     pub single_language_mode: Option<LanguageMode>,
 }
 
+/// Constraints define the limitations and requirements for the technology stack.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Constraints {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -26,6 +36,7 @@ pub struct Constraints {
     pub compliance: Option<Vec<ComplianceType>>,
 }
 
+/// Type of data persistence required by the application.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum PersistenceType {
@@ -34,6 +45,7 @@ pub enum PersistenceType {
     Both,
 }
 
+/// Compliance requirements that the technology stack must support.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ComplianceType {
@@ -44,6 +56,7 @@ pub enum ComplianceType {
     Hipaa,
 }
 
+/// Traffic characteristics that influence technology selection.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TrafficProfile {
     pub rps_peak: f64,
