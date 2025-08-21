@@ -11,6 +11,10 @@ pub mod adapters;
 mod check_forbidden_apis;
 
 #[cfg(feature = "std")]
+pub mod metrics_handler;
+#[cfg(feature = "std")]
+pub mod observability;
+#[cfg(feature = "std")]
 pub mod schema;
 #[cfg(feature = "std")]
 pub mod selector;

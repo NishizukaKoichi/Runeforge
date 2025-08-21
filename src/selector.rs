@@ -3,6 +3,7 @@
 //! This module implements the core selection algorithm that evaluates
 //! technology candidates based on weighted metrics and constraints.
 
+use crate::observability;
 use crate::schema::*;
 use crate::util::{calculate_blueprint_hash, calculate_plan_hash, tie_breaker};
 use serde::{Deserialize, Serialize};
@@ -373,6 +374,17 @@ impl Selector {
             .into_iter()
             .map(|c| {
                 let score = self.calculate_score(&c.metrics, blueprint);
+                
+                // Log scoring details
+                let breakdown = vec![
+                    ("quality".to_string(), self.rules.weights.quality * c.metrics.quality),
+                    ("slo".to_string(), self.rules.weights.slo * c.metrics.slo),
+                    ("cost".to_string(), self.rules.weights.cost * c.metrics.cost),
+                    ("security".to_string(), self.rules.weights.security * c.metrics.security),
+                    ("ops".to_string(), self.rules.weights.ops * c.metrics.ops),
+                ];
+                observability::log_scoring(topic, &c.name, score, &breakdown);
+                
                 (c, score)
             })
             .collect();
@@ -474,10 +486,20 @@ impl Selector {
 
         // Check cost constraints
         if let Some(max_cost) = blueprint.constraints.monthly_cost_usd_max {
-            if candidate.monthly_cost_base > max_cost {
+            let passed = candidate.monthly_cost_base <= max_cost;
+            observability::log_constraint_evaluation(
+                "monthly_cost",
+                max_cost,
+                candidate.monthly_cost_base,
+                passed,
+            );
+            if !passed {
                 return false;
             }
         }
+        
+        // Note: quality_min, security_min, and slo_min constraints could be added
+        // to the schema if needed. For now, these are checked via scoring.
 
         true
     }

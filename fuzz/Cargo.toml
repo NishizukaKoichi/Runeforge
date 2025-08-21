@@ -1,0 +1,35 @@
+[package]
+name = "runeforge-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.runeforge]
+path = ".."
+
+[[bin]]
+name = "blueprint_parser"
+path = "fuzz_targets/blueprint_parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "selector"
+path = "fuzz_targets/selector.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stack_plan_validation"
+path = "fuzz_targets/stack_plan_validation.rs"
+test = false
+doc = false
+bench = false

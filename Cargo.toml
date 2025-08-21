@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [features]
 default = ["std"]
-std = ["thiserror", "clap", "serde_yaml", "schemars", "rand", "anyhow"]
+std = ["thiserror", "clap", "serde_yaml", "schemars", "rand", "anyhow", "tracing", "tracing-subscriber"]
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"], optional = true }
@@ -24,6 +24,8 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 thiserror = { version = "1.0", optional = true }
 anyhow = { version = "1.0", optional = true }
 async-trait = "0.1"
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }

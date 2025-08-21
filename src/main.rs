@@ -3,9 +3,10 @@ compile_error!("The CLI binary requires the 'std' feature");
 
 use clap::{Parser, Subcommand};
 #[cfg(feature = "std")]
-use runeforge::{schema, selector::Selector};
+use runeforge::{observability, schema, selector::Selector};
 use std::fs;
 use std::process;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -37,6 +38,11 @@ enum Commands {
 }
 
 fn main() {
+    // Initialize observability
+    if let Err(e) = observability::init_observability() {
+        eprintln!("Failed to initialize observability: {e}");
+    }
+    
     let cli = Cli::parse();
 
     match &cli.command {
@@ -75,14 +81,21 @@ fn run_plan_with_rules(
     _strict: bool,
     rules_path: &str,
 ) -> Result<(), String> {
+    let _start_time = Instant::now();
+    let _span = observability::DurationSpan::new("run_plan");
+    
     // Read input file
     let input_content =
         fs::read_to_string(file).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Validate and parse blueprint
+    let format = if file.ends_with(".json") { "json" } else { "yaml" };
+    observability::log_blueprint_validation(input_content.len(), format);
+    
     let blueprint = match schema::validate_blueprint(&input_content) {
         Ok(bp) => bp,
         Err(e) => {
+            observability::log_error("blueprint_validation", &e);
             return Err(format!("Failed to parse blueprint: {e}"));
         }
     };
@@ -92,8 +105,15 @@ fn run_plan_with_rules(
         fs::read_to_string(rules_path).map_err(|e| format!("Failed to read rules file: {e}"))?;
 
     // Create selector and generate plan
+    observability::log_selection_start(&blueprint.project_name, seed);
     let selector = Selector::new(&rules_content, seed)?;
-    let plan = selector.select(&blueprint)?;
+    let plan = match selector.select(&blueprint) {
+        Ok(p) => p,
+        Err(e) => {
+            observability::log_error("selection", &e);
+            return Err(e);
+        }
+    };
 
     // Validate output
     if let Err(e) = schema::validate_stack_plan(&plan) {
@@ -111,6 +131,20 @@ fn run_plan_with_rules(
     } else {
         println!("{output_json}");
     }
+    
+    // Log final selection summary
+    let stack_summary = vec![
+        ("language".to_string(), plan.stack.language.clone()),
+        ("frontend".to_string(), plan.stack.frontend.clone()),
+        ("backend".to_string(), plan.stack.backend.clone()),
+        ("database".to_string(), plan.stack.database.clone()),
+        ("cache".to_string(), plan.stack.cache.clone()),
+        ("queue".to_string(), plan.stack.queue.clone()),
+        ("ai".to_string(), plan.stack.ai.join(", ")),
+        ("infra".to_string(), plan.stack.infra.clone()),
+        ("ci_cd".to_string(), plan.stack.ci_cd.clone()),
+    ];
+    observability::log_final_selection(&stack_summary, plan.estimated.monthly_cost_usd);
 
     Ok(())
 }

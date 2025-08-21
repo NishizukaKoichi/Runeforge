@@ -1,0 +1,10 @@
+
+project_name: "high-traffic-app"
+goals:
+  - "Handle massive traffic"
+constraints:
+  monthly_cost_usd_max: 10000
+traffic_profile:
+  rps_peak: 100000
+  global: true
+  latency_sensitive: true

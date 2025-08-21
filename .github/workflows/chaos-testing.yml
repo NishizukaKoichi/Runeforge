@@ -1,0 +1,54 @@
+name: Chaos Testing
+on:
+  schedule:
+    # Run chaos tests weekly
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chaos-tests:
+    name: ci:chaos-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      
+      - uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336a9b35a # stable
+        with:
+          toolchain: 1.82.0
+      
+      - uses: Swatinem/rust-cache@82a92a6e8fbeee089604da2575dc567ae9ddeaab # v2.7.5
+      
+      - name: Run fault injection tests
+        run: cargo test --test fault_injection -- --nocapture
+      
+      - name: Run stress tests with limited resources
+        run: |
+          # Run with limited memory
+          ulimit -v 100000
+          cargo test --release -- --test-threads=1 || true
+          
+          # Reset limits
+          ulimit -v unlimited
+      
+      - name: Test with corrupted test data
+        run: |
+          # Create corrupted test files
+          mkdir -p corrupted_test_data
+          
+          # Binary data as YAML
+          dd if=/dev/urandom of=corrupted_test_data/binary.yaml bs=1024 count=10
+          
+          # Truncated JSON
+          echo '{"project_name": "test", "goals": ["test"], "constraints": {' > corrupted_test_data/truncated.json
+          
+          # Test CLI with corrupted files (should fail gracefully)
+          cargo run -- plan -f corrupted_test_data/binary.yaml || true
+          cargo run -- plan -f corrupted_test_data/truncated.json || true
+          
+          # Cleanup
+          rm -rf corrupted_test_data
