@@ -1,0 +1,14 @@
+project_name: "budget-app"
+goals:
+  - "Low cost deployment"
+constraints:
+  monthly_cost_usd_max: 50
+  persistence: "kv"
+  region_allow: ["us"]
+traffic_profile:
+  rps_peak: 100
+  global: false
+  latency_sensitive: false
+prefs:
+  frontend: ["SvelteKit"]
+  backend: ["Axum"]

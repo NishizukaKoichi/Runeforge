@@ -1,0 +1,19 @@
+project_name: "healthcare-app"
+goals:
+  - "Healthcare data management"
+  - "HIPAA compliant storage"
+constraints:
+  monthly_cost_usd_max: 5000
+  persistence: "both"
+  region_allow: ["us"]
+  compliance: ["audit-log", "sbom", "hipaa", "sox"]
+traffic_profile:
+  rps_peak: 500
+  global: false
+  latency_sensitive: false
+prefs:
+  frontend: ["React"]
+  backend: ["FastAPI"]
+  database: ["PostgreSQL"]
+  ai: ["OpenAI GPT-4o"]
+single_language_mode: null

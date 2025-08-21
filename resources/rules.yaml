@@ -1,0 +1,181 @@
+version: 1
+weights:
+  quality: 0.30
+  slo: 0.25
+  cost: 0.20
+  security: 0.15
+  ops: 0.10
+
+candidates:
+  language:
+    - name: "Rust"
+      metrics: { quality: 0.9, slo: 0.95, cost: 0.8, security: 0.95, ops: 0.85 }
+      regions: ["*"]
+    - name: "Go"
+      metrics: { quality: 0.85, slo: 0.9, cost: 0.85, security: 0.9, ops: 0.9 }
+      regions: ["*"]
+    - name: "TypeScript"
+      metrics: { quality: 0.8, slo: 0.8, cost: 0.9, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+
+  backend:
+    - name: "Actix Web"
+      requires: { language: "Rust" }
+      metrics: { quality: 0.9, slo: 0.9, cost: 0.7, security: 0.8, ops: 0.8 }
+      regions: ["*"]
+      notes: ["High throughput and maturity"]
+    - name: "Axum"
+      requires: { language: "Rust" }
+      metrics: { quality: 0.85, slo: 0.85, cost: 0.7, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+    - name: "Gin"
+      requires: { language: "Go" }
+      metrics: { quality: 0.85, slo: 0.85, cost: 0.75, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+    - name: "Fiber"
+      requires: { language: "Go" }
+      metrics: { quality: 0.8, slo: 0.9, cost: 0.75, security: 0.75, ops: 0.8 }
+      regions: ["*"]
+    - name: "Hono"
+      requires: { language: "TypeScript" }
+      metrics: { quality: 0.8, slo: 0.85, cost: 0.8, security: 0.75, ops: 0.85 }
+      regions: ["*"]
+    - name: "Express"
+      requires: { language: "TypeScript" }
+      metrics: { quality: 0.9, slo: 0.75, cost: 0.8, security: 0.7, ops: 0.8 }
+      regions: ["*"]
+
+  frontend:
+    - name: "SvelteKit"
+      metrics: { quality: 0.85, slo: 0.8, cost: 0.8, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+    - name: "React"
+      metrics: { quality: 0.95, slo: 0.8, cost: 0.75, security: 0.8, ops: 0.9 }
+      regions: ["*"]
+    - name: "Vue"
+      metrics: { quality: 0.85, slo: 0.8, cost: 0.8, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+    - name: "Next.js"
+      metrics: { quality: 0.9, slo: 0.85, cost: 0.7, security: 0.85, ops: 0.9 }
+      regions: ["*"]
+
+  database:
+    - name: "PlanetScale"
+      persistence: "sql"
+      metrics: { quality: 0.8, slo: 0.85, cost: 0.75, security: 0.85, ops: 0.8 }
+      regions: ["us", "eu", "apac"]
+      monthly_cost_base: 10
+    - name: "PostgreSQL"
+      persistence: "sql"
+      metrics: { quality: 0.95, slo: 0.85, cost: 0.8, security: 0.85, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "MongoDB"
+      persistence: "both"
+      metrics: { quality: 0.85, slo: 0.8, cost: 0.7, security: 0.8, ops: 0.8 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "DynamoDB"
+      persistence: "kv"
+      metrics: { quality: 0.8, slo: 0.9, cost: 0.7, security: 0.9, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 5
+    - name: "Redis"
+      persistence: "kv"
+      metrics: { quality: 0.9, slo: 0.95, cost: 0.8, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+
+  cache:
+    - name: "Cloudflare KV"
+      metrics: { quality: 0.8, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.9 }
+      regions: ["global"]
+      monthly_cost_base: 5
+    - name: "Redis"
+      metrics: { quality: 0.9, slo: 0.95, cost: 0.8, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "Memcached"
+      metrics: { quality: 0.85, slo: 0.9, cost: 0.9, security: 0.75, ops: 0.8 }
+      regions: ["*"]
+      monthly_cost_base: 5
+
+  queue:
+    - name: "NATS JetStream"
+      metrics: { quality: 0.85, slo: 0.9, cost: 0.8, security: 0.85, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "Redis Streams"
+      metrics: { quality: 0.8, slo: 0.85, cost: 0.85, security: 0.8, ops: 0.8 }
+      regions: ["*"]
+      monthly_cost_base: 5
+    - name: "RabbitMQ"
+      metrics: { quality: 0.9, slo: 0.85, cost: 0.75, security: 0.85, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 8
+    - name: "AWS SQS"
+      metrics: { quality: 0.85, slo: 0.9, cost: 0.9, security: 0.9, ops: 0.9 }
+      regions: ["*"]
+      monthly_cost_base: 0
+
+  ai:
+    - name: "RuneSage"
+      metrics: { quality: 0.8, slo: 0.8, cost: 0.9, security: 0.85, ops: 0.8 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "OpenAI GPT-4o"
+      metrics: { quality: 0.95, slo: 0.9, cost: 0.7, security: 0.85, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "Claude 3"
+      metrics: { quality: 0.9, slo: 0.85, cost: 0.75, security: 0.9, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 8
+    - name: "Local LLM"
+      metrics: { quality: 0.7, slo: 0.7, cost: 0.95, security: 0.95, ops: 0.7 }
+      regions: ["*"]
+      monthly_cost_base: 0
+
+  infra:
+    - name: "Terraform + Cloudflare Workers (wasm32-unknown-unknown)"
+      metrics: { quality: 0.85, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.9 }
+      regions: ["global"]
+      monthly_cost_base: 5
+    - name: "Kubernetes + AWS"
+      metrics: { quality: 0.9, slo: 0.85, cost: 0.7, security: 0.9, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 35
+    - name: "Docker + DigitalOcean"
+      metrics: { quality: 0.8, slo: 0.8, cost: 0.9, security: 0.8, ops: 0.85 }
+      regions: ["*"]
+      monthly_cost_base: 10
+    - name: "Vercel"
+      metrics: { quality: 0.85, slo: 0.85, cost: 0.8, security: 0.85, ops: 0.95 }
+      regions: ["global"]
+      monthly_cost_base: 10
+
+  ci_cd:
+    - name: "GitHub Actions"
+      metrics: { quality: 0.9, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.95 }
+      regions: ["*"]
+      monthly_cost_base: 0
+    - name: "GitLab CI"
+      metrics: { quality: 0.85, slo: 0.85, cost: 0.8, security: 0.9, ops: 0.9 }
+      regions: ["*"]
+      monthly_cost_base: 0
+    - name: "Jenkins"
+      metrics: { quality: 0.8, slo: 0.8, cost: 0.9, security: 0.8, ops: 0.75 }
+      regions: ["*"]
+      monthly_cost_base: 0
+
+compliance_requirements:
+  audit-log:
+    required_features: ["logging", "immutable_storage"]
+  sbom:
+    required_features: ["dependency_tracking", "vulnerability_scanning"]
+  pci:
+    required_features: ["encryption", "access_control", "audit-log"]
+  sox:
+    required_features: ["audit-log", "access_control", "change_management"]
+  hipaa:
+    required_features: ["encryption", "access_control", "audit-log", "backup"]

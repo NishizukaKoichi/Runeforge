@@ -1,0 +1,15 @@
+project_name: "regional-app"
+goals:
+  - "Europe only deployment"
+constraints:
+  monthly_cost_usd_max: 1000
+  persistence: "sql"
+  region_allow: ["eu"]
+  compliance: ["audit-log"]
+traffic_profile:
+  rps_peak: 500
+  global: false
+  latency_sensitive: true
+prefs:
+  backend: ["Actix Web"]
+  database: ["PlanetScale"]

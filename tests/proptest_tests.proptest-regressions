@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc d1afc9f572e0cd23909d1d8c9fa665fbb12520b8d36b11fa7f872dccb1f6c2d5 # shrinks to blueprint = Blueprint { project_name: "A", goals: ["aaA A"], constraints: Constraints { monthly_cost_usd_max: None, persistence: None, region_allow: None, compliance: None }, traffic_profile: TrafficProfile { rps_peak: 9622.388124851683, global: false, latency_sensitive: false }, prefs: None, single_language_mode: None }

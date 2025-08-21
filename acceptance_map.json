@@ -1,0 +1,174 @@
+{
+  "requirements": {
+    "input_output": {
+      "description": "CLI reads blueprint.yaml/json and outputs plan.json",
+      "tests": [
+        "test_schema_validation::test_valid_input_success",
+        "test_schema_validation::test_json_input_format",
+        "test_determinism::test_output_to_file"
+      ]
+    },
+    "exit_codes": {
+      "exit_0_success": {
+        "description": "Exit code 0 for successful execution",
+        "tests": ["test_schema_validation::test_valid_input_success"]
+      },
+      "exit_1_input_schema_mismatch": {
+        "description": "Exit code 1 for input schema validation failure",
+        "tests": ["test_schema_validation::test_invalid_input_schema_exit_1"]
+      },
+      "exit_2_output_schema_mismatch": {
+        "description": "Exit code 2 for output schema validation failure",
+        "tests": ["test_output_validation::test_output_matches_schema"]
+      },
+      "exit_3_no_matching_stack": {
+        "description": "Exit code 3 when no stack matches constraints",
+        "tests": ["test_constraints::test_no_matching_stack_exit_3"]
+      }
+    },
+    "determinism": {
+      "description": "Same input + seed produces identical plan_hash",
+      "tests": [
+        "test_determinism::test_deterministic_output_with_seed",
+        "test_determinism::test_different_seeds_different_output"
+      ]
+    },
+    "schema_validation": {
+      "input_schema": {
+        "description": "Input must match blueprint.schema.json",
+        "tests": [
+          "test_schema_validation::test_valid_input_success",
+          "test_schema_validation::test_invalid_input_schema_exit_1"
+        ]
+      },
+      "output_schema": {
+        "description": "Output must match stack.schema.json",
+        "tests": [
+          "test_output_validation::test_output_matches_schema",
+          "test_output_validation::test_required_fields_present"
+        ]
+      }
+    },
+    "constraints": {
+      "cost_constraint": {
+        "description": "Monthly cost must not exceed specified maximum",
+        "tests": ["test_constraints::test_cost_constraint_respected"]
+      },
+      "region_constraint": {
+        "description": "Selected stack must support allowed regions",
+        "tests": ["test_constraints::test_region_constraint_respected"]
+      },
+      "compliance_constraint": {
+        "description": "Selected stack must meet compliance requirements",
+        "tests": ["test_constraints::test_compliance_filtering"]
+      },
+      "single_language_mode": {
+        "description": "When specified, entire stack uses single language",
+        "tests": ["test_constraints::test_single_language_mode"]
+      }
+    },
+    "scoring_algorithm": {
+      "description": "Stack selection based on weighted scoring (quality, slo, cost, security, ops)",
+      "weights": {
+        "quality": 0.30,
+        "slo": 0.25,
+        "cost": 0.20,
+        "security": 0.15,
+        "ops": 0.10
+      },
+      "tests": [
+        "test_scoring_algorithm::test_scoring_weights",
+        "test_output_validation::test_decision_scoring"
+      ]
+    },
+    "decision_output": {
+      "description": "Decisions include topic, choice, reasons, alternatives, and score",
+      "tests": [
+        "test_output_validation::test_required_fields_present",
+        "test_output_validation::test_decision_scoring"
+      ]
+    },
+    "preferences": {
+      "description": "User preferences influence but don't guarantee selection",
+      "tests": ["test_scoring_algorithm::test_preferences_influence_selection"]
+    },
+    "traffic_profile": {
+      "latency_sensitive": {
+        "description": "Latency sensitive apps get appropriate stack",
+        "tests": ["test_scoring_algorithm::test_latency_sensitive_scoring"]
+      },
+      "high_rps": {
+        "description": "High RPS influences infrastructure choices",
+        "tests": ["test_scoring_algorithm::test_high_rps_influences_choices"]
+      }
+    },
+    "cli_flags": {
+      "seed": {
+        "description": "--seed flag controls randomness for deterministic output",
+        "tests": ["test_determinism::test_deterministic_output_with_seed"]
+      },
+      "out": {
+        "description": "--out flag writes output to file instead of stdout",
+        "tests": ["test_determinism::test_output_to_file"]
+      },
+      "strict": {
+        "description": "--strict flag enforces schema validation",
+        "tests": ["test_output_validation::test_strict_mode"]
+      }
+    },
+    "hash_generation": {
+      "blueprint_hash": {
+        "description": "SHA-256 hash of input blueprint",
+        "tests": ["test_output_validation::test_required_fields_present"]
+      },
+      "plan_hash": {
+        "description": "SHA-256 hash of output plan",
+        "tests": [
+          "test_output_validation::test_required_fields_present",
+          "test_determinism::test_deterministic_output_with_seed"
+        ]
+      }
+    }
+  },
+  "test_suites": {
+    "schema_validation": {
+      "description": "Tests for input/output schema validation",
+      "files": ["tests/acceptance/test_schema_validation.rs"]
+    },
+    "determinism": {
+      "description": "Tests for deterministic output generation",
+      "files": ["tests/acceptance/test_determinism.rs"]
+    },
+    "constraints": {
+      "description": "Tests for constraint enforcement",
+      "files": ["tests/acceptance/test_constraints.rs"]
+    },
+    "output_validation": {
+      "description": "Tests for output structure and content",
+      "files": ["tests/acceptance/test_output_validation.rs"]
+    },
+    "scoring_algorithm": {
+      "description": "Tests for scoring and selection logic",
+      "files": ["tests/acceptance/test_scoring_algorithm.rs"]
+    }
+  },
+  "fixtures": {
+    "valid": [
+      "tests/acceptance/fixtures/valid_baseline.yaml",
+      "tests/acceptance/fixtures/valid_latency_sensitive.yaml",
+      "tests/acceptance/fixtures/valid_compliance_heavy.yaml",
+      "tests/acceptance/fixtures/valid_minimal.yaml",
+      "tests/acceptance/fixtures/valid_cost_constraint.yaml",
+      "tests/acceptance/fixtures/valid_region_constraint.yaml"
+    ],
+    "invalid": [
+      "tests/acceptance/fixtures/invalid_missing_required.yaml",
+      "tests/acceptance/fixtures/invalid_schema_type.yaml"
+    ]
+  },
+  "coverage": {
+    "requirements_covered": 23,
+    "test_count": 19,
+    "fixture_count": 8
+  }
+}

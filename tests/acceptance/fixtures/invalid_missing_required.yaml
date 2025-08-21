@@ -1,0 +1,6 @@
+# Missing required field: traffic_profile
+project_name: "incomplete-project"
+goals:
+  - "Build something"
+constraints:
+  monthly_cost_usd_max: 100

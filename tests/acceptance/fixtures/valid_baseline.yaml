@@ -1,0 +1,19 @@
+project_name: "baseline-project"
+goals:
+  - "Build a scalable web application"
+  - "Support global users"
+constraints:
+  monthly_cost_usd_max: 500
+  persistence: "sql"
+  region_allow: ["us", "eu", "apac"]
+  compliance: ["audit-log", "sbom"]
+traffic_profile:
+  rps_peak: 1000
+  global: true
+  latency_sensitive: false
+prefs:
+  frontend: ["SvelteKit", "React"]
+  backend: ["Actix Web", "Axum"]
+  database: ["PlanetScale", "PostgreSQL"]
+  ai: ["RuneSage"]
+single_language_mode: "rust"

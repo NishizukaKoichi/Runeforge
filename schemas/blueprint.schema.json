@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Blueprint",
+  "description": "Blueprint requirements for technology stack selection",
+  "type": "object",
+  "required": ["project_name", "goals", "constraints", "traffic_profile"],
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the project"
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Project goals and objectives"
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "monthly_cost_usd_max": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum monthly cost in USD"
+        },
+        "persistence": {
+          "enum": ["kv", "sql", "both"],
+          "description": "Required persistence type"
+        },
+        "region_allow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed deployment regions"
+        },
+        "compliance": {
+          "type": "array",
+          "items": {
+            "enum": ["audit-log", "sbom", "pci", "sox", "hipaa"]
+          },
+          "description": "Required compliance standards"
+        }
+      },
+      "additionalProperties": false
+    },
+    "traffic_profile": {
+      "type": "object",
+      "required": ["rps_peak", "global", "latency_sensitive"],
+      "properties": {
+        "rps_peak": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Peak requests per second"
+        },
+        "global": {
+          "type": "boolean",
+          "description": "Whether the service needs global deployment"
+        },
+        "latency_sensitive": {
+          "type": "boolean",
+          "description": "Whether the service is latency sensitive"
+        }
+      }
+    },
+    "prefs": {
+      "type": "object",
+      "properties": {
+        "frontend": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preferred frontend technologies"
+        },
+        "backend": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preferred backend technologies"
+        },
+        "database": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preferred database technologies"
+        },
+        "ai": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preferred AI/ML services"
+        }
+      },
+      "additionalProperties": false
+    },
+    "single_language_mode": {
+      "enum": ["rust", "go", "ts", null],
+      "description": "Enforce single language for the entire stack"
+    }
+  },
+  "additionalProperties": false
+}

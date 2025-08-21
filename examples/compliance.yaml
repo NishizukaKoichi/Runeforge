@@ -1,0 +1,16 @@
+project_name: "healthcare-platform"
+goals:
+  - "Build HIPAA-compliant healthcare system"
+  - "Secure patient data management"
+  - "Audit trail for all operations"
+constraints:
+  monthly_cost_usd_max: 1500
+  persistence: "sql"
+  compliance: ["hipaa", "audit-log", "sbom"]
+traffic_profile:
+  rps_peak: 5000
+  global: false
+  latency_sensitive: true
+prefs:
+  database: ["PostgreSQL", "MySQL"]
+single_language_mode: "go"

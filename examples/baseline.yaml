@@ -1,0 +1,11 @@
+project_name: "baseline-app"
+goals:
+  - "Build a modern web application"
+  - "Support user authentication"
+  - "Provide real-time updates"
+constraints:
+  monthly_cost_usd_max: 500
+traffic_profile:
+  rps_peak: 1000
+  global: false
+  latency_sensitive: false

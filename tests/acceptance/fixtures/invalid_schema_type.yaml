@@ -1,0 +1,10 @@
+project_name: "bad-types"
+goals:
+  - "Test bad types"
+constraints:
+  monthly_cost_usd_max: "not-a-number"  # Should be number
+  persistence: "nosql"  # Invalid enum value
+traffic_profile:
+  rps_peak: -100  # Should be >= 0
+  global: "yes"  # Should be boolean
+  latency_sensitive: true

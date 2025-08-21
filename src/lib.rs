@@ -10,6 +10,16 @@ pub mod adapters;
 
 mod check_forbidden_apis;
 
+#[cfg(feature = "std")]
+pub mod schema;
+#[cfg(feature = "std")]
+pub mod selector;
+#[cfg(feature = "std")]
+pub mod util;
+
+#[cfg(test)]
+mod test_utils;
+
 pub fn is_wasm() -> bool {
     cfg!(target_arch = "wasm32")
 }

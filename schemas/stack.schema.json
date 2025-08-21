@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stack",
+  "description": "Technology stack selection output",
+  "type": "object",
+  "required": ["decisions", "stack", "estimated", "meta"],
+  "properties": {
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["topic", "choice", "reasons", "alternatives", "score"],
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Technology category"
+          },
+          "choice": {
+            "type": "string",
+            "description": "Selected technology"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Reasons for selection"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Alternative technologies considered"
+          },
+          "score": {
+            "type": "number",
+            "description": "Selection score"
+          }
+        }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "required": ["language", "frontend", "backend", "database", "cache", "queue", "ai", "infra", "ci_cd"],
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Primary programming language"
+        },
+        "frontend": {
+          "type": "string",
+          "description": "Frontend framework"
+        },
+        "backend": {
+          "type": "string",
+          "description": "Backend framework"
+        },
+        "database": {
+          "type": "string",
+          "description": "Database technology"
+        },
+        "cache": {
+          "type": "string",
+          "description": "Caching solution"
+        },
+        "queue": {
+          "type": "string",
+          "description": "Message queue technology"
+        },
+        "ai": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "AI/ML services"
+        },
+        "infra": {
+          "type": "string",
+          "description": "Infrastructure platform"
+        },
+        "ci_cd": {
+          "type": "string",
+          "description": "CI/CD platform"
+        }
+      }
+    },
+    "estimated": {
+      "type": "object",
+      "required": ["monthly_cost_usd"],
+      "properties": {
+        "monthly_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated monthly cost in USD"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["seed", "blueprint_hash", "plan_hash"],
+      "properties": {
+        "seed": {
+          "type": "integer",
+          "description": "Random seed used for deterministic selection"
+        },
+        "blueprint_hash": {
+          "type": "string",
+          "description": "SHA256 hash of blueprint input"
+        },
+        "plan_hash": {
+          "type": "string",
+          "description": "SHA256 hash of stack output"
+        }
+      }
+    }
+  }
+}

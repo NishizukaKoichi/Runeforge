@@ -1,0 +1,19 @@
+project_name: "low-latency-app"
+goals:
+  - "Real-time trading platform"
+  - "Sub-millisecond response times"
+constraints:
+  monthly_cost_usd_max: 2000
+  persistence: "kv"
+  region_allow: ["us", "eu"]
+  compliance: []
+traffic_profile:
+  rps_peak: 10000
+  global: false
+  latency_sensitive: true
+prefs:
+  frontend: ["SvelteKit"]
+  backend: ["Actix Web"]
+  database: []
+  ai: []
+single_language_mode: "rust"

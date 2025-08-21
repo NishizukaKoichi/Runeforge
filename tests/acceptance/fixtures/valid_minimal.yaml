@@ -1,0 +1,8 @@
+project_name: "minimal-project"
+goals:
+  - "Simple API"
+constraints: {}
+traffic_profile:
+  rps_peak: 10
+  global: false
+  latency_sensitive: false

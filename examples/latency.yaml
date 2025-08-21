@@ -1,0 +1,15 @@
+project_name: "low-latency-app"
+goals:
+  - "Build high-performance trading platform"
+  - "Minimize response time"
+  - "Handle market data streams"
+constraints:
+  monthly_cost_usd_max: 2000
+  region_allow: ["us-east", "eu-west", "asia-pacific"]
+traffic_profile:
+  rps_peak: 50000
+  global: true
+  latency_sensitive: true
+prefs:
+  backend: ["Rust", "Go"]
+  database: ["Redis", "ScyllaDB"]
