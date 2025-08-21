@@ -1,3 +1,4 @@
+#[cfg(feature = "std")]
 use thiserror::Error;
 
 #[cfg(not(feature = "std"))]
@@ -7,14 +8,26 @@ use alloc::string::String;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-#[derive(Error, Debug)]
+#[cfg_attr(feature = "std", derive(Error))]
+#[derive(Debug)]
 pub enum IoError {
-    #[error("File not found: {0}")]
+    #[cfg_attr(feature = "std", error("File not found: {0}"))]
     NotFound(String),
-    #[error("Permission denied: {0}")]
+    #[cfg_attr(feature = "std", error("Permission denied: {0}"))]
     PermissionDenied(String),
-    #[error("IO operation failed: {0}")]
+    #[cfg_attr(feature = "std", error("IO operation failed: {0}"))]
     OperationFailed(String),
+}
+
+#[cfg(not(feature = "std"))]
+impl core::fmt::Display for IoError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            IoError::NotFound(path) => write!(f, "File not found: {}", path),
+            IoError::PermissionDenied(path) => write!(f, "Permission denied: {}", path),
+            IoError::OperationFailed(msg) => write!(f, "IO operation failed: {}", msg),
+        }
+    }
 }
 
 #[cfg_attr(target_arch = "wasm32", async_trait::async_trait(?Send))]

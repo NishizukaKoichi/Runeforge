@@ -10,19 +10,19 @@ license = "MIT OR Apache-2.0"
 
 [features]
 default = ["std"]
-std = []
+std = ["thiserror", "clap", "serde_yaml", "schemars", "rand", "anyhow"]
 
 [dependencies]
-clap = { version = "4.5", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-serde_yaml = "0.9"
-schemars = "0.8"
-rand = "0.8"
-sha2 = "0.10"
-hex = "0.4"
-thiserror = "1.0"
-anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"], optional = true }
+serde = { version = "1", features = ["derive", "alloc"], default-features = false }
+serde_json = { version = "1", features = ["alloc"], default-features = false }
+serde_yaml = { version = "0.9", optional = true }
+schemars = { version = "0.8", optional = true }
+rand = { version = "0.8", optional = true }
+sha2 = { version = "0.10", default-features = false }
+hex = { version = "0.4", default-features = false }
+thiserror = { version = "1.0", optional = true }
+anyhow = { version = "1.0", optional = true }
 async-trait = "0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
