@@ -9,12 +9,12 @@ fn test_deterministic_output_with_seed() {
     
     // Run twice with same seed
     let output1 = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--seed", seed])
+        .args(["run", "--", "plan", "-f", fixture, "--seed", seed])
         .output()
         .expect("Failed to execute command");
         
     let output2 = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--seed", seed])
+        .args(["run", "--", "plan", "-f", fixture, "--seed", seed])
         .output()
         .expect("Failed to execute command");
     
@@ -39,12 +39,12 @@ fn test_different_seeds_different_output() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml";
     
     let output1 = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--seed", "42"])
+        .args(["run", "--", "plan", "-f", fixture, "--seed", "42"])
         .output()
         .expect("Failed to execute command");
         
     let output2 = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--seed", "123"])
+        .args(["run", "--", "plan", "-f", fixture, "--seed", "123"])
         .output()
         .expect("Failed to execute command");
     
@@ -78,7 +78,7 @@ fn test_output_to_file() {
     let output_file = "tests/acceptance/test_output.json";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--out", output_file])
+        .args(["run", "--", "plan", "-f", fixture, "--out", output_file])
         .output()
         .expect("Failed to execute command");
     

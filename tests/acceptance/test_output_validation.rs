@@ -8,7 +8,7 @@ fn test_output_matches_schema() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -40,7 +40,7 @@ fn test_required_fields_present() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -102,7 +102,7 @@ fn test_decision_scoring() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -119,8 +119,8 @@ fn test_decision_scoring() {
             .expect("score not a number");
         
         // Score should be between 0 and 1 (normalized)
-        assert!(score >= 0.0 && score <= 1.0, 
-            "Score {} is out of range [0, 1]", score);
+        assert!((0.0..=1.0).contains(&score), 
+            "Score {score} is out of range [0, 1]");
         
         // Reasons should not be empty
         let reasons = decision["reasons"].as_array()
@@ -138,7 +138,7 @@ fn test_decision_scoring() {
 fn test_strict_mode() {
     // Test with valid input and --strict
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/valid_baseline.yaml", "--strict"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/valid_baseline.yaml", "--strict"])
         .output()
         .expect("Failed to execute command");
     
@@ -147,7 +147,7 @@ fn test_strict_mode() {
     
     // Test with invalid input and --strict
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/invalid_schema_type.yaml", "--strict"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/invalid_schema_type.yaml", "--strict"])
         .output()
         .expect("Failed to execute command");
     

@@ -1454,6 +1454,7 @@ dependencies = [
  "async-trait",
  "clap",
  "criterion",
+ "getrandom 0.2.16",
  "hex",
  "insta",
  "jsonschema",

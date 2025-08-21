@@ -7,7 +7,7 @@ fn test_cost_constraint_respected() {
     let fixture = "tests/acceptance/fixtures/valid_cost_constraint.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -21,7 +21,7 @@ fn test_cost_constraint_respected() {
     
     // Cost constraint in fixture is 50 USD
     assert!(estimated_cost <= 50.0, 
-        "Estimated cost {} exceeds constraint of 50 USD", estimated_cost);
+        "Estimated cost {estimated_cost} exceeds constraint of 50 USD");
 }
 
 /// Test that region constraints are respected
@@ -30,7 +30,7 @@ fn test_region_constraint_respected() {
     let fixture = "tests/acceptance/fixtures/valid_region_constraint.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -54,7 +54,7 @@ fn test_compliance_filtering() {
     let fixture = "tests/acceptance/fixtures/valid_compliance_heavy.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -90,7 +90,7 @@ fn test_single_language_mode() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml"; // Has single_language_mode: "rust"
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -110,7 +110,7 @@ fn test_single_language_mode() {
         .expect("No backend in stack");
     
     assert!(backend == "Actix Web" || backend == "Axum" || backend.contains("Rust"),
-        "Backend '{}' should be Rust-compatible", backend);
+        "Backend '{backend}' should be Rust-compatible");
 }
 
 /// Test that no matching stack results in exit code 3
@@ -136,7 +136,7 @@ traffic_profile:
         .expect("Failed to write fixture");
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/impossible_constraints.yaml"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/impossible_constraints.yaml"])
         .output()
         .expect("Failed to execute command");
     

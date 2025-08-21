@@ -1,5 +1,4 @@
 use std::process::Command;
-use std::path::Path;
 
 /// Test that valid input produces exit code 0
 #[test]
@@ -15,7 +14,7 @@ fn test_valid_input_success() {
 
     for fixture in &fixtures {
         let output = Command::new("cargo")
-            .args(&["run", "--", "plan", "-f", &format!("tests/acceptance/fixtures/{}", fixture)])
+            .args(["run", "--", "plan", "-f", &format!("tests/acceptance/fixtures/{fixture}")])
             .output()
             .expect("Failed to execute command");
 
@@ -34,7 +33,7 @@ fn test_invalid_input_schema_exit_1() {
 
     for fixture in &fixtures {
         let output = Command::new("cargo")
-            .args(&["run", "--", "plan", "-f", &format!("tests/acceptance/fixtures/{}", fixture)])
+            .args(["run", "--", "plan", "-f", &format!("tests/acceptance/fixtures/{fixture}")])
             .output()
             .expect("Failed to execute command");
 
@@ -47,7 +46,7 @@ fn test_invalid_input_schema_exit_1() {
 #[test]
 fn test_nonexistent_file() {
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/nonexistent.yaml"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/nonexistent.yaml"])
         .output()
         .expect("Failed to execute command");
 
@@ -74,7 +73,7 @@ fn test_json_input_format() {
         .expect("Failed to write JSON fixture");
 
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/valid_baseline.json"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/valid_baseline.json"])
         .output()
         .expect("Failed to execute command");
 

@@ -4,12 +4,14 @@ pub mod test_helpers {
     use std::fs;
     use tempfile::TempDir;
 
+    #[allow(dead_code)]
     pub fn create_test_blueprint(dir: &TempDir, filename: &str, content: &str) -> String {
         let file_path = dir.path().join(filename);
         fs::write(&file_path, content).unwrap();
         file_path.to_str().unwrap().to_string()
     }
 
+    #[allow(dead_code)]
     pub fn create_test_rules(dir: &TempDir) -> String {
         let rules_content = r#"
 version: 1

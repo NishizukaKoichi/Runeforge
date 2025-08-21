@@ -804,8 +804,7 @@ compliance_requirements:
         // Check that it's a cost constraint error
         assert!(
             err_msg.contains("cost constraint") || err_msg.contains("No suitable"),
-            "Expected cost constraint error, got: {}",
-            err_msg
+            "Expected cost constraint error, got: {err_msg}"
         );
     }
 

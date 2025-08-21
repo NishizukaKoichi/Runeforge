@@ -116,7 +116,7 @@ proptest! {
         num_candidates in 1..20usize
     ) {
         let candidates: Vec<String> = (0..num_candidates)
-            .map(|i| format!("Option{}", i))
+            .map(|i| format!("Option{i}"))
             .collect();
 
         // Should always return one of the candidates
@@ -135,7 +135,7 @@ proptest! {
 
         // Try with different topics
         for i in 0..10 {
-            let topic = format!("topic{}", i);
+            let topic = format!("topic{i}");
             let result = tie_breaker(&topic, seed, candidates.clone());
             results.insert(result);
         }
@@ -153,8 +153,8 @@ proptest! {
     ) {
         let decisions: Vec<Decision> = (0..num_decisions)
             .map(|i| Decision {
-                topic: format!("topic{}", i),
-                choice: format!("choice{}", i),
+                topic: format!("topic{i}"),
+                choice: format!("choice{i}"),
                 reasons: vec!["reason".to_string()],
                 alternatives: vec![],
                 score: 0.5, // Valid score

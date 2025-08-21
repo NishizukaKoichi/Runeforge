@@ -355,8 +355,7 @@ traffic_profile:
         let err = result.unwrap_err();
         assert!(
             err.contains("cost constraint") || err.contains("No suitable"),
-            "Expected cost constraint error, got: {}",
-            err
+            "Expected cost constraint error, got: {err}"
         );
     }
 

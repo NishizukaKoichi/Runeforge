@@ -7,7 +7,7 @@ fn test_scoring_weights() {
     let fixture = "tests/acceptance/fixtures/valid_baseline.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture, "--seed", "42"])
+        .args(["run", "--", "plan", "-f", fixture, "--seed", "42"])
         .output()
         .expect("Failed to execute command");
     
@@ -55,7 +55,7 @@ prefs:
         .expect("Failed to write fixture");
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/test_preferences.yaml"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/test_preferences.yaml"])
         .output()
         .expect("Failed to execute command");
     
@@ -66,9 +66,9 @@ prefs:
     
     // Check if preferred technologies were selected
     let stack = &json["stack"];
-    let frontend = stack["frontend"].as_str().unwrap();
-    let backend = stack["backend"].as_str().unwrap();
-    let database = stack["database"].as_str().unwrap();
+    let _frontend = stack["frontend"].as_str().unwrap();
+    let _backend = stack["backend"].as_str().unwrap();
+    let _database = stack["database"].as_str().unwrap();
     
     // Preferences should influence but not guarantee selection
     // At minimum, check that the system considered these options
@@ -98,7 +98,7 @@ fn test_latency_sensitive_scoring() {
     let fixture = "tests/acceptance/fixtures/valid_latency_sensitive.yaml";
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", fixture])
+        .args(["run", "--", "plan", "-f", fixture])
         .output()
         .expect("Failed to execute command");
     
@@ -148,7 +148,7 @@ traffic_profile:
         .expect("Failed to write fixture");
     
     let output = Command::new("cargo")
-        .args(&["run", "--", "plan", "-f", "tests/acceptance/fixtures/high_rps.yaml"])
+        .args(["run", "--", "plan", "-f", "tests/acceptance/fixtures/high_rps.yaml"])
         .output()
         .expect("Failed to execute command");
     

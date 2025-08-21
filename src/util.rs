@@ -377,7 +377,7 @@ mod tests {
 
     #[test]
     fn test_tie_breaker_long_candidate_list() {
-        let candidates: Vec<String> = (0..100).map(|i| format!("Option{}", i)).collect();
+        let candidates: Vec<String> = (0..100).map(|i| format!("Option{i}")).collect();
 
         let result = tie_breaker("backend", 42, candidates.clone());
         assert!(candidates.contains(&result));
