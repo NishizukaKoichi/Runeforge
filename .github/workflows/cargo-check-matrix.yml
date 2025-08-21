@@ -54,7 +54,7 @@ jobs:
       - name: cargo check
         run: |
           if [[ "${{ matrix.target }}" == "wasm32-wasip1" || "${{ matrix.target }}" == "wasm32-unknown-unknown" ]]; then
-            cargo check --target ${{ matrix.target }} --no-default-features
+            cargo check --lib --target ${{ matrix.target }} --no-default-features
           else
             cargo check --target ${{ matrix.target }}
           fi
