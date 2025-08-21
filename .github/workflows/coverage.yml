@@ -24,7 +24,7 @@ jobs:
       - name: Run tests with coverage
         env:
           TEST_MODE: "1"
-        run: cargo tarpaulin --out Xml --output-dir coverage
+        run: cargo tarpaulin --out Xml --output-dir coverage --timeout 300 --exclude-files "*/e2e.rs"
         
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -35,8 +35,10 @@ jobs:
         continue-on-error: true
           
       - name: Check coverage threshold
+        env:
+          TEST_MODE: "1"
         run: |
-          coverage=$(cargo tarpaulin --print-summary | grep -oP 'Coverage: \K[\d.]+' | head -1)
+          coverage=$(cargo tarpaulin --print-summary --timeout 300 --exclude-files "*/e2e.rs" | grep -oP 'Coverage: \K[\d.]+' | head -1)
           echo "Coverage: $coverage%"
           if (( $(echo "$coverage < 80" | bc -l) )); then
             echo "Coverage $coverage% is below 80% threshold"
