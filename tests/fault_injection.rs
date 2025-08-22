@@ -24,7 +24,7 @@ candidates:
       monthly_cost_base: 0
 "#;
 
-        let result = Selector::new(corrupted_rules, 42);
+        let result = Selector::new(corrupted_rules, 42, 8);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse rules"));
     }
@@ -126,7 +126,7 @@ traffic_profile:
         let blueprint = schema::validate_blueprint(blueprint_str).unwrap();
 
         let rules_content = include_str!("../resources/rules.yaml");
-        let selector = Selector::new(rules_content, 42).unwrap();
+        let selector = Selector::new(rules_content, 42, 8).unwrap();
 
         let result = selector.select(&blueprint);
         assert!(result.is_err());
@@ -159,7 +159,7 @@ traffic_profile:
         let blueprint = schema::validate_blueprint(blueprint_str).unwrap();
 
         let rules_content = include_str!("../resources/rules.yaml");
-        let selector = Selector::new(rules_content, 42).unwrap();
+        let selector = Selector::new(rules_content, 42, 8).unwrap();
 
         let result = selector.select(&blueprint);
         // Should fail to find a suitable stack
@@ -170,7 +170,7 @@ traffic_profile:
     #[test]
     fn test_empty_rules_file() {
         let empty_rules = "";
-        let result = Selector::new(empty_rules, 42);
+        let result = Selector::new(empty_rules, 42, 8);
         assert!(result.is_err());
     }
 
@@ -192,12 +192,12 @@ traffic_profile:
         let rules_content = include_str!("../resources/rules.yaml");
 
         // Test with maximum u64 value
-        let selector_max = Selector::new(rules_content, u64::MAX).unwrap();
+        let selector_max = Selector::new(rules_content, u64::MAX, 8).unwrap();
         let result_max = selector_max.select(&blueprint);
         assert!(result_max.is_ok());
 
         // Test with 0
-        let selector_zero = Selector::new(rules_content, 0).unwrap();
+        let selector_zero = Selector::new(rules_content, 0, 8).unwrap();
         let result_zero = selector_zero.select(&blueprint);
         assert!(result_zero.is_ok());
     }
@@ -227,7 +227,7 @@ candidates:
       monthly_cost_base: 0
 "#;
 
-        let result = Selector::new(cyclic_rules, 42);
+        let result = Selector::new(cyclic_rules, 42, 8);
         // Should handle cyclic dependencies gracefully
         assert!(result.is_ok() || result.is_err());
     }
@@ -293,7 +293,7 @@ candidates:
       monthly_cost_base: 0
 "#;
 
-        let selector = Selector::new(rules_with_missing_deps, 42).unwrap();
+        let selector = Selector::new(rules_with_missing_deps, 42, 8).unwrap();
 
         let blueprint_str = r#"
 project_name: "test-project"

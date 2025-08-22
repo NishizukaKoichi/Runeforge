@@ -1,16 +1,25 @@
-project_name: "healthcare-platform"
+project_name: "compliance-app"
 goals:
-  - "Build HIPAA-compliant healthcare system"
-  - "Secure patient data management"
-  - "Audit trail for all operations"
+  - "Build a healthcare management system"
+  - "Process patient records securely"
+  - "Ensure HIPAA and SOX compliance"
+  - "Provide real-time data analytics"
 constraints:
-  monthly_cost_usd_max: 1500
-  persistence: "sql"
-  compliance: ["hipaa", "audit-log", "sbom"]
+  monthly_cost_usd_max: 5000
+  compliance:
+    - hipaa
+    - sox
+  region_allow:
+    - us-east-1
+    - us-west-2
+  persistence: both
 traffic_profile:
   rps_peak: 5000
   global: false
   latency_sensitive: true
 prefs:
-  database: ["PostgreSQL", "MySQL"]
-single_language_mode: "go"
+  backend:
+    - "Actix Web"
+    - "Gin"
+  database:
+    - "PostgreSQL"

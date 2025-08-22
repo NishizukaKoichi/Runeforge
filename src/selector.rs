@@ -32,6 +32,8 @@ pub struct Weights {
 /// Technology candidates organized by category.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CandidateCategories {
+    #[serde(default)]
+    pub services: ServiceCandidates,
     pub language: Vec<Candidate>,
     pub backend: Vec<Candidate>,
     pub frontend: Vec<Candidate>,
@@ -41,6 +43,32 @@ pub struct CandidateCategories {
     pub ai: Vec<Candidate>,
     pub infra: Vec<Candidate>,
     pub ci_cd: Vec<Candidate>,
+}
+
+/// Service-specific candidates for Polyglot support
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ServiceCandidates {
+    #[serde(default)]
+    pub api: Vec<ServiceCandidate>,
+    #[serde(default)]
+    pub edge: Vec<ServiceCandidate>,
+    #[serde(default)]
+    pub worker: Vec<ServiceCandidate>,
+}
+
+/// A service candidate with language, framework, and runtime details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceCandidate {
+    pub name: String,
+    pub language: String,
+    pub framework: String,
+    pub runtime: String,
+    pub build: String,
+    pub tests: String,
+    pub metrics: Metrics,
+    pub regions: Vec<String>,
+    #[serde(default)]
+    pub monthly_cost_base: f64,
 }
 
 /// A technology candidate with its metrics and constraints.
@@ -83,14 +111,22 @@ pub struct ComplianceRequirement {
 pub struct Selector {
     rules: Rules,
     seed: u64,
+    beam: usize,
+}
+
+#[derive(Debug, Clone)]
+struct ServiceConfiguration {
+    service_type: String,
+    candidate: ServiceCandidate,
+    score: f64,
 }
 
 impl Selector {
-    pub fn new(rules_content: &str, seed: u64) -> Result<Self, String> {
+    pub fn new(rules_content: &str, seed: u64, beam: usize) -> Result<Self, String> {
         let rules: Rules = serde_yaml::from_str(rules_content)
             .map_err(|e| format!("Failed to parse rules: {e}"))?;
 
-        Ok(Selector { rules, seed })
+        Ok(Selector { rules, seed, beam })
     }
 
     pub fn select(&self, blueprint: &Blueprint) -> Result<StackPlan, String> {
@@ -158,9 +194,13 @@ impl Selector {
             }
         }
 
+        // Build services using beam search
+        let services = self.select_services(blueprint, &language.choice)?;
+
         // Build the stack
         let stack = Stack {
             language: language.choice,
+            services: Some(services),
             frontend: frontend.choice,
             backend: backend.choice,
             database: database.choice,
@@ -180,6 +220,8 @@ impl Selector {
             stack: stack.clone(),
             estimated: Estimated {
                 monthly_cost_usd: total_cost,
+                egress_gb: Some(200.0), // Default estimate
+                notes: Some(vec!["Target regions: us/eu/apac".to_string()]),
             },
             meta: Meta {
                 seed: self.seed as i64,
@@ -551,6 +593,144 @@ impl Selector {
             .map(|c| c.monthly_cost_base)
             .unwrap_or(0.0)
     }
+
+    fn select_services(&self, blueprint: &Blueprint, _primary_language: &str) -> Result<Vec<Service>, String> {
+        let mut services = Vec::new();
+        
+        // Use beam search to find best service combinations
+        let beam_configurations = self.generate_service_configurations(blueprint, _primary_language);
+        
+        // Select API service
+        if let Some(api_service) = self.select_best_service("api", &beam_configurations, blueprint)? {
+            services.push(api_service);
+        }
+        
+        // Select Edge service if needed for global traffic
+        if blueprint.traffic_profile.global {
+            if let Some(edge_service) = self.select_best_service("edge", &beam_configurations, blueprint)? {
+                services.push(edge_service);
+            }
+        }
+        
+        // Select Worker service if high RPS
+        if blueprint.traffic_profile.rps_peak > 10000.0 {
+            if let Some(worker_service) = self.select_best_service("worker", &beam_configurations, blueprint)? {
+                services.push(worker_service);
+            }
+        }
+        
+        Ok(services)
+    }
+    
+    fn generate_service_configurations(&self, blueprint: &Blueprint, _primary_language: &str) -> Vec<ServiceConfiguration> {
+        let mut configurations = Vec::new();
+        
+        // Generate configurations based on beam width
+        let service_types = ["api", "edge", "worker"];
+        
+        for service_type in &service_types {
+            let candidates = match *service_type {
+                "api" => &self.rules.candidates.services.api,
+                "edge" => &self.rules.candidates.services.edge,
+                "worker" => &self.rules.candidates.services.worker,
+                _ => continue,
+            };
+            
+            // Score and rank candidates
+            let mut scored_candidates: Vec<(ServiceCandidate, f64)> = candidates
+                .iter()
+                .filter(|c| {
+                    // Filter by single language mode if specified
+                    if let Some(lang_mode) = &blueprint.single_language_mode {
+                        match lang_mode {
+                            LanguageMode::Rust => c.language == "Rust",
+                            LanguageMode::Go => c.language == "Go",
+                            LanguageMode::Ts => c.language == "TypeScript",
+                        }
+                    } else {
+                        true  // No language mode restriction
+                    }
+                })
+                .map(|c| {
+                    let score = self.calculate_service_score(c, blueprint);
+                    (c.clone(), score)
+                })
+                .collect();
+            
+            // Sort by score descending
+            scored_candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            
+            // Take top beam candidates
+            let top_candidates: Vec<ServiceConfiguration> = scored_candidates
+                .into_iter()
+                .take(self.beam)
+                .map(|(candidate, score)| ServiceConfiguration {
+                    service_type: service_type.to_string(),
+                    candidate,
+                    score,
+                })
+                .collect();
+            
+            configurations.extend(top_candidates);
+        }
+        
+        configurations
+    }
+    
+    fn select_best_service(&self, service_type: &str, configurations: &[ServiceConfiguration], _blueprint: &Blueprint) -> Result<Option<Service>, String> {
+        use crate::schema::Service;
+        
+        let relevant_configs: Vec<&ServiceConfiguration> = configurations
+            .iter()
+            .filter(|c| c.service_type == service_type)
+            .collect();
+        
+        if relevant_configs.is_empty() {
+            return Ok(None);
+        }
+        
+        // Select best based on score
+        let best = relevant_configs
+            .into_iter()
+            .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap())
+            .unwrap();
+        
+        Ok(Some(Service {
+            name: service_type.to_string(),
+            kind: service_type.to_string(),
+            language: best.candidate.language.clone(),
+            framework: best.candidate.framework.clone(),
+            runtime: best.candidate.runtime.clone(),
+            build: best.candidate.build.clone(),
+            tests: best.candidate.tests.clone(),
+        }))
+    }
+    
+    fn calculate_service_score(&self, candidate: &ServiceCandidate, blueprint: &Blueprint) -> f64 {
+        let weights = &self.rules.weights;
+        let metrics = &candidate.metrics;
+        
+        // Base score calculation
+        let mut score = weights.quality * metrics.quality
+            + weights.slo * metrics.slo
+            + weights.cost * metrics.cost
+            + weights.security * metrics.security
+            + weights.ops * metrics.ops;
+        
+        // Adjust for latency sensitivity
+        if blueprint.traffic_profile.latency_sensitive {
+            score = score * 0.8 + metrics.slo * 0.2;
+        }
+        
+        // Penalty for cost if over budget
+        if let Some(max_cost) = blueprint.constraints.monthly_cost_usd_max {
+            if candidate.monthly_cost_base > max_cost * 0.1 {
+                score *= 0.8;
+            }
+        }
+        
+        score
+    }
 }
 
 #[cfg(test)]
@@ -705,21 +885,21 @@ compliance_requirements:
 
     #[test]
     fn test_selector_creation() {
-        let selector = Selector::new(get_test_rules(), 42);
+        let selector = Selector::new(get_test_rules(), 42, 8);
         assert!(selector.is_ok());
     }
 
     #[test]
     fn test_selector_invalid_yaml() {
         let invalid_yaml = "invalid: yaml: content:";
-        let selector = Selector::new(invalid_yaml, 42);
+        let selector = Selector::new(invalid_yaml, 42, 8);
         assert!(selector.is_err());
         assert!(selector.unwrap_err().contains("Failed to parse rules"));
     }
 
     #[test]
     fn test_select_complete_stack() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result = selector.select(&blueprint);
@@ -744,7 +924,7 @@ compliance_requirements:
 
     #[test]
     fn test_single_language_mode() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
 
         // Test Rust mode
         let mut blueprint = get_test_blueprint();
@@ -775,7 +955,7 @@ compliance_requirements:
 
     #[test]
     fn test_persistence_constraints() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
 
         // Test SQL constraint
@@ -802,7 +982,7 @@ compliance_requirements:
 
     #[test]
     fn test_region_constraints() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
 
         // Constrain to us-east-1 only
@@ -820,7 +1000,7 @@ compliance_requirements:
 
     #[test]
     fn test_cost_constraints() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
 
         // Set very low cost constraint
@@ -838,7 +1018,7 @@ compliance_requirements:
 
     #[test]
     fn test_preferences() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
 
         // Set preferences
@@ -862,7 +1042,7 @@ compliance_requirements:
 
     #[test]
     fn test_scoring_algorithm() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result = selector.select(&blueprint);
@@ -885,7 +1065,7 @@ compliance_requirements:
 
     #[test]
     fn test_latency_sensitive_scoring() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
         blueprint.traffic_profile.latency_sensitive = true;
 
@@ -901,7 +1081,7 @@ compliance_requirements:
 
     #[test]
     fn test_ai_selection_multiple() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result = selector.select(&blueprint);
@@ -925,7 +1105,7 @@ compliance_requirements:
 
     #[test]
     fn test_compliance_reasons() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
         blueprint.constraints.compliance = Some(vec![ComplianceType::Hipaa, ComplianceType::Sox]);
 
@@ -945,8 +1125,8 @@ compliance_requirements:
 
     #[test]
     fn test_deterministic_selection() {
-        let selector1 = Selector::new(get_test_rules(), 42).unwrap();
-        let selector2 = Selector::new(get_test_rules(), 42).unwrap();
+        let selector1 = Selector::new(get_test_rules(), 42, 8).unwrap();
+        let selector2 = Selector::new(get_test_rules(), 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result1 = selector1.select(&blueprint).unwrap();
@@ -966,8 +1146,8 @@ compliance_requirements:
 
     #[test]
     fn test_different_seeds_different_results() {
-        let selector1 = Selector::new(get_test_rules(), 42).unwrap();
-        let selector2 = Selector::new(get_test_rules(), 99).unwrap();
+        let selector1 = Selector::new(get_test_rules(), 42, 8).unwrap();
+        let selector2 = Selector::new(get_test_rules(), 99, 8).unwrap();
 
         // Create a blueprint that would result in ties
         let mut blueprint = get_test_blueprint();
@@ -1012,7 +1192,7 @@ candidates:
   ci_cd: []
 "#;
 
-        let selector = Selector::new(rules_yaml, 42).unwrap();
+        let selector = Selector::new(rules_yaml, 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
         blueprint.constraints.region_allow = Some(vec!["us-east-1".to_string()]);
 
@@ -1025,7 +1205,7 @@ candidates:
 
     #[test]
     fn test_cost_calculation() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result = selector.select(&blueprint);
@@ -1041,7 +1221,7 @@ candidates:
 
     #[test]
     fn test_empty_goals() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
         blueprint.goals = vec![];
 
@@ -1053,7 +1233,7 @@ candidates:
 
     #[test]
     fn test_backend_language_requirement() {
-        let selector = Selector::new(get_test_rules(), 42).unwrap();
+        let selector = Selector::new(get_test_rules(), 42, 8).unwrap();
         let mut blueprint = get_test_blueprint();
 
         // Force TypeScript language
@@ -1123,7 +1303,7 @@ candidates:
       regions: ["*"]
 "#;
 
-        let selector = Selector::new(rules_yaml, 42).unwrap();
+        let selector = Selector::new(rules_yaml, 42, 8).unwrap();
         let blueprint = get_test_blueprint();
 
         let result = selector.select(&blueprint);

@@ -1,309 +1,161 @@
 # Runeforge
 
----
-
 ## 0. ゴール
 
-CLI で **Blueprint**（要件記述）を読み取り、→ **最適スタック**を JSON で返す。  
-生成した `plan.json` は RuneWeave 以降にそのまま渡せる。
+Runeforge は CLI ツールです。  
+**Blueprint（要件記述）** を入力とし、要件に最適化された **技術スタック構成（plan.json）** を決定的に生成します。
+
+- サービス単位で **言語・フレームワーク・ランタイム** を含む Polyglot 構成に対応。
+    
+- 生成物は **RuneWeave 以降の工程にそのまま渡せる**。
+    
+- **同じ入力 + seed** であれば必ず同じ結果を返す決定論的設計。
+    
 
 ---
 
-## 1. 入出力
-
-|種別|形式|スキーマ|
-|---|---|---|
-|入力|`blueprint.yaml` / `blueprint.json`|`schemas/blueprint.schema.json`|
-|出力|`plan.json`|`schemas/stack.schema.json`|
-
-### 1.1 CLI
+## 1. CLI 仕様
 
 ```bash
 runeforge plan \
-  -f blueprint.yaml   # 必須
-  --seed 42           # 同一入力+seed でハッシュ不変
-  --out plan.json     # 省略時 stdout
-  --strict            # schema NG で exit≠0
+  -f blueprint.yaml   # 必須: Blueprint入力
+  --seed 42           # 決定性のための乱数シード
+  --out plan.json     # 出力先（省略時は stdout）
+  --strict            # スキーマ検証NGなら exit≠0
+  --beam 8            # サービス組合せ探索幅（既定=8）
 ```
 
-|Exit|意味|
+### 終了コード
+
+|Code|意味|
 |---|---|
-|0|正常|
+|0|正常終了|
 |1|入力スキーマ不一致|
 |2|出力スキーマ不一致|
-|3|条件に合うスタックなし|
+|3|条件に合う候補が存在しない|
 
 ---
 
 ## 2. スキーマ
 
-### 2.1 `schemas/blueprint.schema.json`（抜粋）
+### 2.1 Blueprint (`schemas/blueprint.schema.json`)
 
-```jsonc
-{
-  "type": "object",
-  "required": ["project_name", "goals", "constraints", "traffic_profile"],
-  "properties": {
-    "project_name": { "type": "string", "minLength": 1 },
-    "goals": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-    "constraints": {
-      "type": "object",
-      "properties": {
-        "monthly_cost_usd_max": { "type": "number", "minimum": 0 },
-        "persistence": { "enum": ["kv","sql","both"] },
-        "region_allow": { "type": "array", "items": { "type": "string" } },
-        "compliance": {
-          "type": "array",
-          "items": { "enum": ["audit-log","sbom","pci","sox","hipaa"] }
-        }
-      },
-      "additionalProperties": false
-    },
-    "traffic_profile": {
-      "type": "object",
-      "required": ["rps_peak","global","latency_sensitive"],
-      "properties": {
-        "rps_peak": { "type": "number", "minimum": 0 },
-        "global": { "type": "boolean" },
-        "latency_sensitive": { "type": "boolean" }
-      }
-    },
-    "prefs": {
-      "type": "object",
-      "properties": {
-        "frontend": { "type": "array", "items": { "type": "string" } },
-        "backend":  { "type": "array", "items": { "type": "string" } },
-        "database": { "type": "array", "items": { "type": "string" } },
-        "ai":       { "type": "array", "items": { "type": "string" } }
-      },
-      "additionalProperties": false
-    },
-    "single_language_mode": { "enum": ["rust","go","ts",null] }
-  },
-  "additionalProperties": false
-}
-```
+Blueprint は要件定義です。必須項目は以下です。
 
-### 2.2 `schemas/stack.schema.json`（抜粋）
+- `project_name`: プロジェクト名
+    
+- `goals`: 達成したい目標リスト
+    
+- `constraints`: コスト上限・コンプライアンス・利用可能リージョンなど
+    
+- `traffic_profile`: RPSピークやグローバル展開要否など
+    
+- `prefs`: 開発者の嗜好（使いたい/避けたい技術スタック）
+    
+- `single_language_mode`: 全サービスを特定言語で統一したい場合に指定（例: `"rust"`, `"ts"`）
+    
 
-```jsonc
-{
-  "type": "object",
-  "required": ["decisions","stack","estimated","meta"],
-  "properties": {
-    "decisions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["topic","choice","reasons","alternatives","score"],
-        "properties": {
-          "topic": { "type": "string" },
-          "choice": { "type": "string" },
-          "reasons": { "type": "array", "items": { "type": "string" } },
-          "alternatives": { "type": "array", "items": { "type": "string" } },
-          "score": { "type": "number" }
-        }
-      }
-    },
-    "stack": {
-      "type": "object",
-      "required": ["language","frontend","backend","database","cache","queue","ai","infra","ci_cd"],
-      "properties": {
-        "language": { "type": "string" },
-        "frontend": { "type": "string" },
-        "backend":  { "type": "string" },
-        "database": { "type": "string" },
-        "cache":    { "type": "string" },
-        "queue":    { "type": "string" },
-        "ai":       { "type": "array", "items": { "type": "string" } },
-        "infra":    { "type": "string" },
-        "ci_cd":    { "type": "string" }
-      }
-    },
-    "estimated": {
-      "type": "object",
-      "required": ["monthly_cost_usd"],
-      "properties": { "monthly_cost_usd": { "type": "number", "minimum": 0 } }
-    },
-    "meta": {
-      "type": "object",
-      "required": ["seed","blueprint_hash","plan_hash"],
-      "properties": {
-        "seed": { "type": "integer" },
-        "blueprint_hash": { "type": "string" },
-        "plan_hash": { "type": "string" }
-      }
-    }
-  }
-}
-```
+### 2.2 Stack (`schemas/stack.schema.json`)
+
+Runeforge が返す plan.json の仕様です。
+
+- `decisions[]`: 各決定に関する選択理由・代替案・スコア
+    
+- `stack`: 実際に選ばれたスタック構成
+    
+    - `language`: 単一言語モード互換用（Polyglot時は代表言語を記録）
+        
+    - `services[]`: 各サービスの言語・フレームワーク・ランタイム
+        
+    - その他、`frontend` / `backend` / `database` / `cache` / `queue` / `ai` / `infra` / `ci_cd`
+        
+- `estimated`: コスト推定など
+    
+- `meta`: seed やハッシュ情報
+    
 
 ---
 
 ## 3. 選定ロジック
 
-1. **正規化** — `blueprint.(yaml|json)` を内部構造体へ。
+1. **正規化**  
+    Blueprint を内部構造体に読み込む。
     
-2. **候補列挙** — `resources/rules.yaml` に候補と制約（対応リージョン、依存性、前提コスト等）を定義。
+2. **候補列挙**  
+    `resources/rules.yaml` に定義された「サービス種別 × 言語 × フレームワーク」候補を取得。
     
 3. **スコアリング**
     
-    ```text
-    score = Σ weight_i × metric_i
-    weights: quality 0.30 / slo 0.25 / cost 0.20 / security 0.15 / ops 0.10
-    metrics 例:
-      quality: コミュニティ成熟度・ドキュメント充実度
-      slo: 低遅延対応・水平分散適性
-      cost: ランニング+egress 推定
-      security: SBOM/署名/ゼロトラスト適性
-      ops: CI/CD 一体化容易性・IaC との親和性
+    ```
+    score = Σ (weight_i × metric_i) - penalty
     ```
     
-4. **フィルタ** — コスト上限・リージョン許可・コンプライアンスで除外。
+    - quality (0.30) / slo (0.25) / cost (0.20) / security (0.15) / ops (0.10)
+        
+    - penalty: 言語が増えるごとの複雑性、パッケージ管理の分散など
+        
+4. **フィルタ**  
+    コスト上限、許可リージョン、コンプライアンス要件を満たさない候補を除外。
     
-5. **決定性** — `--seed` で RNG を固定。同点は `tie_breaker(topic, seed)` で安定化。
+5. **決定性**  
+    同点時は seed を使って安定的に tie-break。
     
-6. **根拠生成** — 1 位と次善案を `decisions[]` に格納（`reasons[]` 付き）。
+6. **根拠生成**  
+    採択理由、次善候補、スコアを `decisions[]` に保存。
     
-7. **スキーマ検証** — `stack.schema.json` に適合しなければ exit=2。
+7. **スキーマ検証**  
+    出力が `stack.schema.json` に適合しなければ exit=2。
     
 
 ---
 
-## 4. 受け入れ基準
-
-|#|条件|
-|---|---|
-|1|入力スキーマ NG → exit 1|
-|2|出力スキーマ NG → exit 2|
-|3|同入力+seed で `meta.plan_hash` 不変（SHA-256/hex）|
-|4|`decisions[*]` に理由・代替・スコアが入る|
-|5|付属テストケース（baseline / latency / compliance）3 つがすべて緑|
-
----
-
-## 5. 実装レイアウト
-
-```
-/src
-  main.rs        # clap CLI（サブコマンド plan）
-  selector.rs    # 候補列挙 + スコアリング + tie-break
-  schema.rs      # schemars で I/O 検証
-  util.rs        # hash（sha256+hex）・決定性 RNG（seed）
-/resources
-  rules.yaml     # 候補・重み・前提コスト・適用条件
-/schemas
-  blueprint.schema.json
-  stack.schema.json
-/examples
-  baseline.yaml
-  latency.yaml
-  compliance.yaml
-```
-
-### 依存（固定）
-
-|crate|ver|用途|
-|---|---|---|
-|`clap`|4.5|CLI パーサ（derive） ([Docs.rs](https://docs.rs/crate/clap/latest?utm_source=chatgpt.com "clap 4.5.42 - Docs.rs"))|
-|`serde` / `serde_json` / `serde_yaml`|1 / 1 / 0.9系|JSON/YAML I/O（derive） ([Docs.rs](https://docs.rs/crate/serde/latest?utm_source=chatgpt.com "serde 1.0.219 - Docs.rs"))|
-|`schemars`|0.8|JSON Schema 生成・検証 ([Docs.rs](https://docs.rs/schemars/latest/schemars/?utm_source=chatgpt.com "schemars - Rust - Docs.rs"), [Graham’s Cool Site](https://graham.cool/schemars/v0/?utm_source=chatgpt.com "Overview \| Schemars"))|
-|`rand`|0.8|決定性 RNG（seed 固定） ([Docs.rs](https://docs.rs/crate/rand/0.8.0?utm_source=chatgpt.com "rand 0.8.0 - Docs.rs"))|
-|`sha2` + `hex`|0.10 / 0.4|ハッシュ（plan/blueprint） ([Docs.rs](https://docs.rs/crate/sha2/latest?utm_source=chatgpt.com "sha2 0.10.9 - Docs.rs"))|
-
-`Cargo.toml` の `rust-version = "1.80"` を明記（MSRV 固定）。Rust 1.80+ でのビルドを前提とする。 ([GitHub](https://github.com/dtolnay/rust-toolchain/blob/master/action.yml?utm_source=chatgpt.com "rust-toolchain/action.yml at master · dtolnay/rust-toolchain · GitHub"))
-
----
-
-## 6. `resources/rules.yaml`（構造例）
-
-```yaml
-version: 1
-weights:
-  quality: 0.30
-  slo: 0.25
-  cost: 0.20
-  security: 0.15
-  ops: 0.10
-
-candidates:
-  backend:
-    - name: "Actix Web"
-      requires: { language: "Rust" }
-      metrics: { quality: 0.9, slo: 0.9, cost: 0.7, security: 0.8, ops: 0.8 }
-      regions: ["*"]
-      notes: ["成熟度と高スループット"]
-    - name: "Axum"
-      requires: { language: "Rust" }
-      metrics: { quality: 0.85, slo: 0.85, cost: 0.7, security: 0.8, ops: 0.85 }
-      regions: ["*"]
-
-  frontend:
-    - name: "SvelteKit"
-      metrics: { quality: 0.85, slo: 0.8, cost: 0.8, security: 0.8, ops: 0.85 }
-      regions: ["*"]
-
-  database:
-    - name: "PlanetScale"
-      metrics: { quality: 0.8, slo: 0.85, cost: 0.75, security: 0.85, ops: 0.8 }
-      regions: ["us","eu","apac"]
-
-  cache:
-    - name: "Cloudflare KV"
-      metrics: { quality: 0.8, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.9 }
-      regions: ["global"]
-
-  queue:
-    - name: "NATS JetStream"
-      metrics: { quality: 0.85, slo: 0.9, cost: 0.8, security: 0.85, ops: 0.85 }
-      regions: ["*"]
-
-  ai:
-    - name: "RuneSage"
-      metrics: { quality: 0.8, slo: 0.8, cost: 0.9, security: 0.85, ops: 0.8 }
-      regions: ["*"]
-    - name: "OpenAI GPT-4o"
-      metrics: { quality: 0.95, slo: 0.9, cost: 0.7, security: 0.85, ops: 0.85 }
-      regions: ["*"]
-
-  infra:
-    - name: "Terraform + Cloudflare Workers (wasm32-unknown-unknown)"
-      metrics: { quality: 0.85, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.9 }
-      regions: ["global"]
-
-  ci_cd:
-    - name: "GitHub Actions"
-      metrics: { quality: 0.9, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.95 }
-      regions: ["*"]
-```
-
----
-
-## 7. 出力サンプル（`plan.json` 抜粋）
+## 4. 出力サンプル
 
 ```jsonc
 {
   "decisions": [
     {
-      "topic": "backend",
+      "topic": "api.framework",
       "choice": "Actix Web",
-      "reasons": ["高スループット/成熟度", "SLO重視のスコアが最上位"],
-      "alternatives": ["Axum"],
-      "score": 0.862
+      "reasons": ["高スループット", "成熟度が高い"],
+      "alternatives": ["Fastify"],
+      "score": 0.87
     }
   ],
   "stack": {
-    "language":  "Rust",
-    "frontend":  "SvelteKit",
-    "backend":   "Actix Web",
-    "database":  "PlanetScale",
-    "cache":     "Cloudflare KV",
-    "queue":     "NATS JetStream",
-    "ai":        ["RuneSage","OpenAI GPT-4o"],
-    "infra":     "Terraform + Cloudflare Workers (wasm32-unknown-unknown)",
-    "ci_cd":     "GitHub Actions"
+    "language": "Rust",
+    "services": [
+      {
+        "name": "api",
+        "kind": "api",
+        "language": "Rust",
+        "framework": "Actix Web",
+        "runtime": "rust@1.82",
+        "build": "cargo",
+        "tests": "cargo test"
+      },
+      {
+        "name": "edge",
+        "kind": "edge",
+        "language": "TypeScript",
+        "framework": "Cloudflare Workers",
+        "runtime": "node@22",
+        "build": "pnpm",
+        "tests": "pnpm test"
+      }
+    ],
+    "database": "PlanetScale",
+    "cache": "Cloudflare KV",
+    "queue": "NATS JetStream",
+    "ai": ["OpenAI GPT-4o"],
+    "infra": "Terraform + Cloudflare",
+    "ci_cd": "GitHub Actions"
   },
-  "estimated": { "monthly_cost_usd": 110 },
+  "estimated": {
+    "monthly_cost_usd": 120,
+    "egress_gb": 200,
+    "notes": ["対象リージョン: us/eu/apac"]
+  },
   "meta": {
     "seed": 42,
     "blueprint_hash": "sha256:...",
@@ -314,31 +166,58 @@ candidates:
 
 ---
 
-## 8. テスト
+## 5. 実装構成
 
-- `cargo test` で以下を検証：
+```
+/src
+  main.rs        # CLI (clap)
+  selector.rs    # 候補列挙・スコアリング・tie-break
+  schema.rs      # 入出力スキーマ検証
+  util.rs        # ハッシュ・決定性RNG
+/resources
+  rules.yaml     # 候補と評価指標
+/schemas
+  blueprint.schema.json
+  stack.schema.json
+/examples
+  baseline.yaml
+  latency.yaml
+  compliance.yaml
+```
+
+### 主な依存クレート
+
+- `clap` 4.5（CLI）
     
-    - 入力スキーマ適合（NG で exit=1） — `schemars` による検証。 ([Docs.rs](https://docs.rs/schemars/latest/schemars/?utm_source=chatgpt.com "schemars - Rust - Docs.rs"))
-        
-    - 出力スキーマ適合（NG で exit=2）
-        
-    - 決定論的ハッシュ（同入力+seed → `meta.plan_hash` 不変）
-        
-    - 3 ケース（`examples/baseline.yaml` / `latency.yaml` / `compliance.yaml`）が緑
-        
+- `serde` / `serde_json` / `serde_yaml`（I/O）
+    
+- `schemars`（スキーマ検証）
+    
+- `rand` 0.8（決定性RNG）
+    
+- `sha2` + `hex`（ハッシュ）
+    
+
+MSRV = Rust 1.82 固定。
 
 ---
 
-## 9. CI（最小）
+## 6. 受け入れ基準
 
-- **GitHub Actions**：`dtolnay/rust-toolchain` でツールチェイン導入 → `Swatinem/rust-cache` → `cargo test --locked`。 ([GitHub](https://github.com/dtolnay/rust-toolchain?utm_source=chatgpt.com "GitHub - dtolnay/rust-toolchain: Concise GitHub Action for installing a ..."))
+- 入力スキーマ不一致 → exit 1
     
-- 推奨 `permissions`：`contents: read`。
+- 出力スキーマ不一致 → exit 2
     
-- `ubuntu-24.04` ランナー固定。
+- 同一入力 + seed → plan_hash が不変
     
-- 例：
+- decisions[] に理由・代替・スコアが記録されている
     
+- baseline / latency / compliance のテストケースが全て緑
+    
+
+---
+
+## 7. CI 最小構成（例）
 
 ```yaml
 name: runeforge-ci
@@ -348,24 +227,19 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable        # Rust導入
-      - uses: Swatinem/rust-cache@v2               # キャッシュ
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - run: cargo test --locked
 ```
 
 ---
 
-## 10. 実装開始（コマンド）
+## まとめ
 
-```bash
-cargo new --bin runeforge && cd runeforge
-# ├─ src/{main.rs,selector.rs,schema.rs,util.rs}
-# ├─ resources/rules.yaml
-# └─ schemas/{blueprint.schema.json,stack.schema.json}
-```
+Runeforge は、Blueprint を基に **Polyglot 技術スタックを決定論的に導出するプランナー**です。
 
-— 依存追加：`clap = "4.5"`, `serde = { version = "1", features = ["derive"] }`,  
-`serde_json = "1"`, `serde_yaml = "0.9"`, `schemars = "0.8"`,  
-`rand = "0.8"`, `sha2 = "0.10"`, `hex = "0.4"`（MSRV 1.80 固定）。 ([Docs.rs](https://docs.rs/crate/clap/latest?utm_source=chatgpt.com "clap 4.5.42 - Docs.rs"))
-
----
+- サービスごとの言語・フレームワーク選定が可能。
+    
+- コスト、性能、コンプライアンス要件を満たした最適解を返す。
+    
+- RuneWeave 以降の工程とシームレスに連携できる。

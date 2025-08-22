@@ -1,15 +1,25 @@
-project_name: "low-latency-app"
+project_name: "latency-sensitive-app"
 goals:
-  - "Build high-performance trading platform"
-  - "Minimize response time"
-  - "Handle market data streams"
+  - "Build a real-time trading platform"
+  - "Minimize latency to microseconds"
+  - "Handle 100k+ concurrent connections"
+  - "Support global edge deployment"
 constraints:
-  monthly_cost_usd_max: 2000
-  region_allow: ["us-east", "eu-west", "asia-pacific"]
+  monthly_cost_usd_max: 10000
+  region_allow:
+    - us-east-1
+    - eu-west-1
+    - ap-northeast-1
+  persistence: kv
 traffic_profile:
   rps_peak: 50000
   global: true
   latency_sensitive: true
 prefs:
-  backend: ["Rust", "Go"]
-  database: ["Redis", "ScyllaDB"]
+  backend:
+    - "Axum"
+  cache:
+    - "Redis"
+  queue:
+    - "NATS JetStream"
+single_language_mode: rust

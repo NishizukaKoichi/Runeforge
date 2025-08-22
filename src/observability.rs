@@ -23,12 +23,13 @@ pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     if is_test_mode {
-        // Use compact format for tests
+        // Use compact format for tests, write to stderr
         let fmt_layer = fmt::layer()
             .with_target(false)
             .with_thread_ids(false)
             .with_file(false)
             .with_line_number(false)
+            .with_writer(std::io::stderr)
             .compact();
 
         tracing_subscriber::registry()
@@ -36,12 +37,13 @@ pub fn init_observability() -> Result<(), Box<dyn std::error::Error>> {
             .with(fmt_layer)
             .init();
     } else {
-        // Use JSON format for production
+        // Use JSON format for production, write to stderr
         let fmt_layer = fmt::layer()
             .with_target(true)
             .with_thread_ids(true)
             .with_file(true)
             .with_line_number(true)
+            .with_writer(std::io::stderr)
             .json();
 
         tracing_subscriber::registry()

@@ -105,6 +105,8 @@ pub struct Decision {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Stack {
     pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub services: Option<Vec<Service>>,
     pub frontend: String,
     pub backend: String,
     pub database: String,
@@ -116,8 +118,23 @@ pub struct Stack {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct Service {
+    pub name: String,
+    pub kind: String,
+    pub language: String,
+    pub framework: String,
+    pub runtime: String,
+    pub build: String,
+    pub tests: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Estimated {
     pub monthly_cost_usd: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub egress_gb: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -473,6 +490,7 @@ single_language_mode: ts
             }],
             stack: Stack {
                 language: "Rust".to_string(),
+                services: None,
                 frontend: "SvelteKit".to_string(),
                 backend: "Actix Web".to_string(),
                 database: "PostgreSQL".to_string(),
@@ -484,6 +502,8 @@ single_language_mode: ts
             },
             estimated: Estimated {
                 monthly_cost_usd: 500.0,
+                egress_gb: None,
+                notes: None,
             },
             meta: Meta {
                 seed: 42,
@@ -502,6 +522,7 @@ single_language_mode: ts
             decisions: vec![],
             stack: Stack {
                 language: "Rust".to_string(),
+                services: None,
                 frontend: "SvelteKit".to_string(),
                 backend: "Actix Web".to_string(),
                 database: "PostgreSQL".to_string(),
@@ -513,6 +534,8 @@ single_language_mode: ts
             },
             estimated: Estimated {
                 monthly_cost_usd: -100.0,
+                egress_gb: None,
+                notes: None,
             },
             meta: Meta {
                 seed: 42,
@@ -540,6 +563,7 @@ single_language_mode: ts
             }],
             stack: Stack {
                 language: "Rust".to_string(),
+                services: None,
                 frontend: "SvelteKit".to_string(),
                 backend: "Actix Web".to_string(),
                 database: "PostgreSQL".to_string(),
@@ -551,6 +575,8 @@ single_language_mode: ts
             },
             estimated: Estimated {
                 monthly_cost_usd: 500.0,
+                egress_gb: None,
+                notes: None,
             },
             meta: Meta {
                 seed: 42,

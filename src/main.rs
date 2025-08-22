@@ -34,6 +34,10 @@ enum Commands {
         /// Enable strict schema validation
         #[arg(long = "strict")]
         strict: bool,
+
+        /// Service combination search width
+        #[arg(long = "beam", default_value = "8")]
+        beam: usize,
     },
 }
 
@@ -51,8 +55,9 @@ fn main() {
             seed,
             out,
             strict,
+            beam,
         } => {
-            if let Err(e) = run_plan(file, *seed, out.as_deref(), *strict) {
+            if let Err(e) = run_plan(file, *seed, out.as_deref(), *strict, *beam) {
                 eprintln!("Error: {e}");
                 // Determine exit code based on error type
                 let exit_code = if e.contains("Failed to parse blueprint") || e.contains("schema") {
@@ -70,8 +75,8 @@ fn main() {
     }
 }
 
-fn run_plan(file: &str, seed: u64, out: Option<&str>, _strict: bool) -> Result<(), String> {
-    run_plan_with_rules(file, seed, out, _strict, "resources/rules.yaml")
+fn run_plan(file: &str, seed: u64, out: Option<&str>, _strict: bool, beam: usize) -> Result<(), String> {
+    run_plan_with_rules(file, seed, out, _strict, beam, "resources/rules.yaml")
 }
 
 fn run_plan_with_rules(
@@ -79,6 +84,7 @@ fn run_plan_with_rules(
     seed: u64,
     out: Option<&str>,
     _strict: bool,
+    beam: usize,
     rules_path: &str,
 ) -> Result<(), String> {
     let _start_time = Instant::now();
@@ -110,7 +116,7 @@ fn run_plan_with_rules(
 
     // Create selector and generate plan
     observability::log_selection_start(&blueprint.project_name, seed);
-    let selector = Selector::new(&rules_content, seed)?;
+    let selector = Selector::new(&rules_content, seed, beam)?;
     let plan = match selector.select(&blueprint) {
         Ok(p) => p,
         Err(e) => {
@@ -253,6 +259,7 @@ traffic_profile:
             42,
             Some(output_path.to_str().unwrap()),
             false,
+            8,
             &rules_path,
         );
 
@@ -283,7 +290,7 @@ traffic_profile:
         let (_bp_dir, bp_path) = create_test_blueprint(blueprint_content);
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(&bp_path, 42, None, false, &rules_path);
+        let result = run_plan_with_rules(&bp_path, 42, None, false, 8, &rules_path);
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse blueprint"));
@@ -293,7 +300,7 @@ traffic_profile:
     fn test_run_plan_file_not_found() {
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules("/nonexistent/file.yaml", 42, None, false, &rules_path);
+        let result = run_plan_with_rules("/nonexistent/file.yaml", 42, None, false, 8, &rules_path);
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to read input file"));
@@ -314,7 +321,7 @@ traffic_profile:
 
         let (_bp_dir, bp_path) = create_test_blueprint(blueprint_content);
 
-        let result = run_plan_with_rules(&bp_path, 42, None, false, "/nonexistent/rules.yaml");
+        let result = run_plan_with_rules(&bp_path, 42, None, false, 8, "/nonexistent/rules.yaml");
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to read rules file"));
@@ -346,6 +353,7 @@ traffic_profile:
             42,
             Some(output_path1.to_str().unwrap()),
             false,
+            8,
             &rules_path,
         );
         let result2 = run_plan_with_rules(
@@ -353,6 +361,7 @@ traffic_profile:
             42,
             Some(output_path2.to_str().unwrap()),
             false,
+            8,
             &rules_path,
         );
 
@@ -387,7 +396,7 @@ traffic_profile:
         let (_bp_dir, bp_path) = create_test_blueprint(blueprint_content);
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(&bp_path, 42, None, false, &rules_path);
+        let result = run_plan_with_rules(&bp_path, 42, None, false, 8, &rules_path);
 
         assert!(result.is_err());
         let err = result.unwrap_err();
@@ -418,7 +427,7 @@ traffic_profile:
 
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(file_path.to_str().unwrap(), 42, None, false, &rules_path);
+        let result = run_plan_with_rules(file_path.to_str().unwrap(), 42, None, false, 8, &rules_path);
 
         assert!(result.is_ok());
     }
@@ -442,7 +451,7 @@ traffic_profile:
         let (_bp_dir, bp_path) = create_test_blueprint(blueprint_content);
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(&bp_path, 42, None, false, &rules_path);
+        let result = run_plan_with_rules(&bp_path, 42, None, false, 8, &rules_path);
 
         assert!(result.is_ok());
     }
@@ -459,7 +468,7 @@ goals:
         let (_bp_dir, bp_path) = create_test_blueprint(blueprint_content);
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(&bp_path, 42, None, false, &rules_path);
+        let result = run_plan_with_rules(&bp_path, 42, None, false, 8, &rules_path);
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse blueprint"));

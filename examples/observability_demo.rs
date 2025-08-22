@@ -39,7 +39,7 @@ prefs:
     let rules_content = fs::read_to_string("resources/rules.yaml")?;
 
     // Create selector and generate plan (this will log selection process)
-    let selector = Selector::new(&rules_content, 42)?;
+    let selector = Selector::new(&rules_content, 42, 8)?;
     let plan = selector.select(&blueprint)?;
 
     // Validate output

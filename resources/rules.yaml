@@ -7,6 +7,75 @@ weights:
   ops: 0.10
 
 candidates:
+  # Service-specific candidates for Polyglot support
+  services:
+    api:
+      - name: "Rust API Service"
+        language: "Rust"
+        framework: "Actix Web"
+        runtime: "rust@1.82"
+        build: "cargo build --release"
+        tests: "cargo test"
+        metrics: { quality: 0.9, slo: 0.95, cost: 0.8, security: 0.95, ops: 0.85 }
+        regions: ["*"]
+        monthly_cost_base: 20
+      - name: "Go API Service"
+        language: "Go"
+        framework: "Gin"
+        runtime: "go@1.22"
+        build: "go build"
+        tests: "go test ./..."
+        metrics: { quality: 0.85, slo: 0.9, cost: 0.85, security: 0.9, ops: 0.9 }
+        regions: ["*"]
+        monthly_cost_base: 20
+      - name: "TypeScript API Service"
+        language: "TypeScript"
+        framework: "Fastify"
+        runtime: "node@22"
+        build: "pnpm build"
+        tests: "pnpm test"
+        metrics: { quality: 0.8, slo: 0.85, cost: 0.9, security: 0.8, ops: 0.85 }
+        regions: ["*"]
+        monthly_cost_base: 15
+    edge:
+      - name: "Cloudflare Workers Edge"
+        language: "TypeScript"
+        framework: "Cloudflare Workers"
+        runtime: "workers"
+        build: "wrangler build"
+        tests: "vitest"
+        metrics: { quality: 0.85, slo: 0.95, cost: 0.9, security: 0.85, ops: 0.9 }
+        regions: ["global"]
+        monthly_cost_base: 5
+      - name: "Vercel Edge Functions"
+        language: "TypeScript"
+        framework: "Vercel Edge"
+        runtime: "edge"
+        build: "vercel build"
+        tests: "pnpm test"
+        metrics: { quality: 0.8, slo: 0.9, cost: 0.85, security: 0.85, ops: 0.95 }
+        regions: ["global"]
+        monthly_cost_base: 10
+    worker:
+      - name: "Rust Worker"
+        language: "Rust"
+        framework: "Tokio"
+        runtime: "rust@1.82"
+        build: "cargo build --release"
+        tests: "cargo test"
+        metrics: { quality: 0.9, slo: 0.9, cost: 0.8, security: 0.95, ops: 0.85 }
+        regions: ["*"]
+        monthly_cost_base: 15
+      - name: "Go Worker"
+        language: "Go"
+        framework: "Native"
+        runtime: "go@1.22"
+        build: "go build"
+        tests: "go test ./..."
+        metrics: { quality: 0.85, slo: 0.85, cost: 0.85, security: 0.9, ops: 0.9 }
+        regions: ["*"]
+        monthly_cost_base: 15
+
   language:
     - name: "Rust"
       metrics: { quality: 0.9, slo: 0.95, cost: 0.8, security: 0.95, ops: 0.85 }

@@ -165,6 +165,7 @@ proptest! {
             decisions,
             stack: Stack {
                 language: "Rust".to_string(),
+                services: None,
                 frontend: "SvelteKit".to_string(),
                 backend: "Actix".to_string(),
                 database: "PostgreSQL".to_string(),
@@ -174,7 +175,11 @@ proptest! {
                 infra: "Terraform".to_string(),
                 ci_cd: "GitHub".to_string(),
             },
-            estimated: Estimated { monthly_cost_usd: monthly_cost },
+            estimated: Estimated { 
+                monthly_cost_usd: monthly_cost,
+                egress_gb: None,
+                notes: None,
+            },
             meta: Meta {
                 seed,
                 blueprint_hash: "sha256:test".to_string(),

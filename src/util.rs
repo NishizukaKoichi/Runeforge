@@ -71,6 +71,7 @@ mod tests {
     fn test_deterministic_hash() {
         let data = Stack {
             language: "rust".to_string(),
+            services: None,
             frontend: "SvelteKit".to_string(),
             backend: "Actix Web".to_string(),
             database: "PostgreSQL".to_string(),
@@ -91,6 +92,7 @@ mod tests {
     fn test_hash_different_data() {
         let data1 = Stack {
             language: "rust".to_string(),
+            services: None,
             frontend: "SvelteKit".to_string(),
             backend: "Actix Web".to_string(),
             database: "PostgreSQL".to_string(),
@@ -103,6 +105,7 @@ mod tests {
 
         let data2 = Stack {
             language: "go".to_string(), // Different language
+            services: None,
             frontend: "SvelteKit".to_string(),
             backend: "Actix Web".to_string(),
             database: "PostgreSQL".to_string(),
@@ -123,6 +126,7 @@ mod tests {
     fn test_hash_format() {
         let data = Stack {
             language: "rust".to_string(),
+            services: None,
             frontend: "SvelteKit".to_string(),
             backend: "Actix Web".to_string(),
             database: "PostgreSQL".to_string(),
