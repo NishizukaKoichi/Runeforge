@@ -46,7 +46,7 @@ traffic_profile:
 
     c.bench_function("selection_algorithm", |b| {
         b.iter(|| {
-            let selector = Selector::new(&rules_yaml, 42).unwrap();
+            let selector = Selector::new(&rules_yaml, 42, 8).unwrap();
             let _ = selector.select(black_box(&blueprint));
         })
     });
@@ -70,7 +70,7 @@ traffic_profile:
 
     let blueprint = schema::validate_blueprint(blueprint_yaml).expect("Failed to parse blueprint");
 
-    let selector = Selector::new(&rules_yaml, 42).unwrap();
+    let selector = Selector::new(&rules_yaml, 42, 8).unwrap();
     let plan = selector.select(&blueprint).unwrap();
 
     c.bench_function("stack_validation", |b| {
@@ -99,7 +99,7 @@ traffic_profile:
     c.bench_function("end_to_end", |b| {
         b.iter(|| {
             let blueprint = schema::validate_blueprint(black_box(blueprint_yaml)).unwrap();
-            let selector = Selector::new(&rules_yaml, 42).unwrap();
+            let selector = Selector::new(&rules_yaml, 42, 8).unwrap();
             let plan = selector.select(&blueprint).unwrap();
             let _ = schema::validate_stack_plan(&plan);
         })

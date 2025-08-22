@@ -175,7 +175,7 @@ proptest! {
                 infra: "Terraform".to_string(),
                 ci_cd: "GitHub".to_string(),
             },
-            estimated: Estimated { 
+            estimated: Estimated {
                 monthly_cost_usd: monthly_cost,
                 egress_gb: None,
                 notes: None,

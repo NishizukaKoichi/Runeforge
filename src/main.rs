@@ -75,7 +75,13 @@ fn main() {
     }
 }
 
-fn run_plan(file: &str, seed: u64, out: Option<&str>, _strict: bool, beam: usize) -> Result<(), String> {
+fn run_plan(
+    file: &str,
+    seed: u64,
+    out: Option<&str>,
+    _strict: bool,
+    beam: usize,
+) -> Result<(), String> {
     run_plan_with_rules(file, seed, out, _strict, beam, "resources/rules.yaml")
 }
 
@@ -427,7 +433,8 @@ traffic_profile:
 
         let (_rules_dir, rules_path) = create_test_rules();
 
-        let result = run_plan_with_rules(file_path.to_str().unwrap(), 42, None, false, 8, &rules_path);
+        let result =
+            run_plan_with_rules(file_path.to_str().unwrap(), 42, None, false, 8, &rules_path);
 
         assert!(result.is_ok());
     }

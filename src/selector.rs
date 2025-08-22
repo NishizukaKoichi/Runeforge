@@ -594,40 +594,55 @@ impl Selector {
             .unwrap_or(0.0)
     }
 
-    fn select_services(&self, blueprint: &Blueprint, _primary_language: &str) -> Result<Vec<Service>, String> {
+    fn select_services(
+        &self,
+        blueprint: &Blueprint,
+        _primary_language: &str,
+    ) -> Result<Vec<Service>, String> {
         let mut services = Vec::new();
-        
+
         // Use beam search to find best service combinations
-        let beam_configurations = self.generate_service_configurations(blueprint, _primary_language);
-        
+        let beam_configurations =
+            self.generate_service_configurations(blueprint, _primary_language);
+
         // Select API service
-        if let Some(api_service) = self.select_best_service("api", &beam_configurations, blueprint)? {
+        if let Some(api_service) =
+            self.select_best_service("api", &beam_configurations, blueprint)?
+        {
             services.push(api_service);
         }
-        
+
         // Select Edge service if needed for global traffic
         if blueprint.traffic_profile.global {
-            if let Some(edge_service) = self.select_best_service("edge", &beam_configurations, blueprint)? {
+            if let Some(edge_service) =
+                self.select_best_service("edge", &beam_configurations, blueprint)?
+            {
                 services.push(edge_service);
             }
         }
-        
+
         // Select Worker service if high RPS
         if blueprint.traffic_profile.rps_peak > 10000.0 {
-            if let Some(worker_service) = self.select_best_service("worker", &beam_configurations, blueprint)? {
+            if let Some(worker_service) =
+                self.select_best_service("worker", &beam_configurations, blueprint)?
+            {
                 services.push(worker_service);
             }
         }
-        
+
         Ok(services)
     }
-    
-    fn generate_service_configurations(&self, blueprint: &Blueprint, _primary_language: &str) -> Vec<ServiceConfiguration> {
+
+    fn generate_service_configurations(
+        &self,
+        blueprint: &Blueprint,
+        _primary_language: &str,
+    ) -> Vec<ServiceConfiguration> {
         let mut configurations = Vec::new();
-        
+
         // Generate configurations based on beam width
         let service_types = ["api", "edge", "worker"];
-        
+
         for service_type in &service_types {
             let candidates = match *service_type {
                 "api" => &self.rules.candidates.services.api,
@@ -635,7 +650,7 @@ impl Selector {
                 "worker" => &self.rules.candidates.services.worker,
                 _ => continue,
             };
-            
+
             // Score and rank candidates
             let mut scored_candidates: Vec<(ServiceCandidate, f64)> = candidates
                 .iter()
@@ -648,7 +663,7 @@ impl Selector {
                             LanguageMode::Ts => c.language == "TypeScript",
                         }
                     } else {
-                        true  // No language mode restriction
+                        true // No language mode restriction
                     }
                 })
                 .map(|c| {
@@ -656,10 +671,10 @@ impl Selector {
                     (c.clone(), score)
                 })
                 .collect();
-            
+
             // Sort by score descending
             scored_candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-            
+
             // Take top beam candidates
             let top_candidates: Vec<ServiceConfiguration> = scored_candidates
                 .into_iter()
@@ -670,31 +685,36 @@ impl Selector {
                     score,
                 })
                 .collect();
-            
+
             configurations.extend(top_candidates);
         }
-        
+
         configurations
     }
-    
-    fn select_best_service(&self, service_type: &str, configurations: &[ServiceConfiguration], _blueprint: &Blueprint) -> Result<Option<Service>, String> {
+
+    fn select_best_service(
+        &self,
+        service_type: &str,
+        configurations: &[ServiceConfiguration],
+        _blueprint: &Blueprint,
+    ) -> Result<Option<Service>, String> {
         use crate::schema::Service;
-        
+
         let relevant_configs: Vec<&ServiceConfiguration> = configurations
             .iter()
             .filter(|c| c.service_type == service_type)
             .collect();
-        
+
         if relevant_configs.is_empty() {
             return Ok(None);
         }
-        
+
         // Select best based on score
         let best = relevant_configs
             .into_iter()
             .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap())
             .unwrap();
-        
+
         Ok(Some(Service {
             name: service_type.to_string(),
             kind: service_type.to_string(),
@@ -705,30 +725,30 @@ impl Selector {
             tests: best.candidate.tests.clone(),
         }))
     }
-    
+
     fn calculate_service_score(&self, candidate: &ServiceCandidate, blueprint: &Blueprint) -> f64 {
         let weights = &self.rules.weights;
         let metrics = &candidate.metrics;
-        
+
         // Base score calculation
         let mut score = weights.quality * metrics.quality
             + weights.slo * metrics.slo
             + weights.cost * metrics.cost
             + weights.security * metrics.security
             + weights.ops * metrics.ops;
-        
+
         // Adjust for latency sensitivity
         if blueprint.traffic_profile.latency_sensitive {
             score = score * 0.8 + metrics.slo * 0.2;
         }
-        
+
         // Penalty for cost if over budget
         if let Some(max_cost) = blueprint.constraints.monthly_cost_usd_max {
             if candidate.monthly_cost_base > max_cost * 0.1 {
                 score *= 0.8;
             }
         }
-        
+
         score
     }
 }
